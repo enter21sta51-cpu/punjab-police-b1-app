@@ -540,31 +540,40 @@ firebase.auth().onAuthStateChanged((user) => {
     }
 });
 
-// ====== LOGIN & REGISTER SUBMIT LOGIC ======
+// ====== LOGIN & REGISTER SUBMIT LOGIC (FIXED) ======
 function handleAuthSubmit() {
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value;
     const loginTab = document.getElementById('login-tab');
+    const submitBtn = document.getElementById('auth-submit-btn');
     
-    // ਇਹ ਚੈੱਕ ਕਰੇਗਾ ਕਿ ਇਸ ਵੇਲੇ Login ਟੈਬ ਖੁੱਲ੍ਹੀ ਹੈ ਜਾਂ Register
-    const isLoginMode = loginTab.classList.contains('active');
-
     if (!email || !password) {
         alert("Kripya email ate password bharein!");
         return;
     }
 
+    // ਬਟਨ ਦੇ ਟੈਕਸਟ ਤੋਂ ਸਿੱਧਾ ਪਤਾ ਲਗਾਓ ਕਿ ਯੂਜ਼ਰ ਕੀ ਕਰਨਾ ਚਾਹੁੰਦਾ ਹੈ (ਸਭ ਤੋਂ ਸੁਰੱਖਿਅਤ ਤਰੀਕਾ)
+    const isLoginMode = submitBtn.innerText.includes("Login");
+
     if (isLoginMode) {
-        // ====== LOGIN LOGIC ======
+        // ====== 🔓 LOGIN LOGIC ======
         auth.signInWithEmailAndPassword(email, password)
             .then((userCredential) => {
-                console.log("Logged in successfully!");
+                console.log("Logged in successfully! 🚀");
+                // ਇੱਥੇ ਕੋਈ ਅਲਰਟ ਲਗਾਉਣ ਦੀ ਲੋੜ ਨਹੀਂ, onAuthStateChanged ਆਪਣੇ ਆਪ ਡੈਸ਼ਬੋਰਡ ਖੋਲ੍ਹ ਦੇਵੇਗਾ
             })
             .catch((error) => {
-                alert("Login Error: " + error.message);
+                // ਜੇਕਰ ਕੋਈ ਗਲਤੀ ਹੈ ਤਾਂ ਸਾਫ਼ ਦੱਸੇਗਾ
+                if (error.code === "auth/user-not-found") {
+                    alert("Eh email register nahi ਹੈ। Kripya Register karo.");
+                } else if (error.code === "auth/wrong-password") {
+                    alert("Galt Password! Kripya sahi password भरो।");
+                } else {
+                    alert("Login Error: " + error.message);
+                }
             });
     } else {
-        // ====== REGISTER LOGIC ======
+        // ====== 📝 REGISTER LOGIC ======
         const name = document.getElementById('auth-name').value.trim();
         const phone = document.getElementById('auth-phone').value.trim();
 
@@ -573,23 +582,21 @@ function handleAuthSubmit() {
             return;
         }
 
-        // 1. ਫਾਇਰਬੇਸ ਵਿੱਚ ਨਵਾਂ ਯੂਜ਼ਰ ਬਣਾਓ
         auth.createUserWithEmailAndPassword(email, password)
             .then((userCredential) => {
                 const user = userCredential.user;
-                
-                // 2. ਯੂਜ਼ਰ ਦਾ ਡਾਟਾ ਫਾਇਰਸਟੋਰ (Database) ਵਿੱਚ ਸੇਵ ਕਰੋ
                 return db.collection('users').doc(user.uid).set({
                     name: name,
                     email: email,
                     phone: phone,
-                    subscriptionStatus: "free", // ਸ਼ੁਰੂ ਵਿੱਚ ਸਭ ਫ੍ਰੀ ਹੋਣਗੇ
+                    subscriptionStatus: "free",
                     streak: 0,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             })
             .then(() => {
-                alert("Account successfully register ho gya ਹੈ! 🎉");
+                alert("Account successfully register ho gya ਹੈ! 🎉 Hun Login karo.");
+                switchAuthTab('login'); // ਆਪਣੇ ਆਪ ਲਾਗਿਨ ਵਾਲੇ ਪਾਸੇ ਭੇਜ ਦੇਵੇਗਾ
             })
             .catch((error) => {
                 alert("Registration Error: " + error.message);
