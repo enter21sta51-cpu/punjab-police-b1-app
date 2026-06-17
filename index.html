@@ -112,6 +112,35 @@
             <div id="history-list" class="list-container"></div>
         </div>
     </div>
+    
+    <div id="admin-screen" class="view main-container" style="display: none;">
+        <div class="dashboard-box">
+            <button class="btn-back" onclick="switchView('dashboard-screen')">⬅️ Back to Dashboard</button>
+            <h2>⚙️ Add New Question</h2>
+            <br>
+            <div class="form-group">
+                <label class="input-label">QUESTION (ਸਵਾਲ)</label>
+                <input type="text" id="admin-question" placeholder="Type question here...">
+
+                <label class="input-label">OPTION A</label>
+                <input type="text" id="admin-opt-a" placeholder="Option A">
+
+                <label class="input-label">OPTION B</label>
+                <input type="text" id="admin-opt-b" placeholder="Option B">
+
+                <label class="input-label">OPTION C</label>
+                <input type="text" id="admin-opt-c" placeholder="Option C">
+
+                <label class="input-label">OPTION D</label>
+                <input type="text" id="admin-opt-d" placeholder="Option D">
+
+                <label class="input-label">CORRECT ANSWER (A, B, C, or D)</label>
+                <input type="text" id="admin-correct" placeholder="e.g. A" style="text-transform: uppercase;">
+
+                <button class="btn-primary" onclick="saveQuestionToFirestore()" style="background: #22c55e;">Save Question 🚀</button>
+            </div>
+        </div>
+    </div>
 
     <footer class="premium-footer">
         <p>© 2026 Punjab Police B1 TEST App.</p>
