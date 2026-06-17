@@ -486,3 +486,40 @@ document.getElementById('admin-add-q-form').addEventListener('submit', e => {
 window.addEventListener('DOMContentLoaded', () => {
     app.initAuth();
 });
+
+// ====== AUTH TAB SWITCHING LOGIC ======
+function switchAuthTab(tab) {
+    const loginTab = document.getElementById('login-tab');
+    const registerTab = document.getElementById('register-tab');
+    const submitBtn = document.getElementById('auth-submit-btn');
+    const regFields = document.querySelectorAll('.reg-field');
+    const toggleMsg = document.getElementById('auth-toggle-msg');
+
+    if (tab === 'login') {
+        // Login tab nu active karo
+        loginTab.classList.add('active');
+        registerTab.classList.remove('active');
+        submitBtn.innerText = 'Login Karo 🚀';
+        
+        // Register waale extra fields nu huta do
+        regFields.forEach(field => {
+            field.style.display = 'none';
+        });
+        
+        // Thalle waala text badlo
+        toggleMsg.innerHTML = 'Account nahi hai? <span onclick="switchAuthTab(\'register\')">Register karo</span>';
+    } else {
+        // Register tab nu active karo
+        registerTab.classList.add('active');
+        loginTab.classList.remove('active');
+        submitBtn.innerText = 'Register Karo 🎉';
+        
+        // Full Name ate Phone Number waale fields dikhao
+        regFields.forEach(field => {
+            field.style.display = 'block';
+        });
+        
+        // Thalle waala text badlo
+        toggleMsg.innerHTML = 'Already have an account? <span onclick="switchAuthTab(\'login\')">Login karo</span>';
+    }
+}
