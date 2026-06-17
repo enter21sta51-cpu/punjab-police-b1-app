@@ -523,3 +523,19 @@ function switchAuthTab(tab) {
         toggleMsg.innerHTML = 'Already have an account? <span onclick="switchAuthTab(\'login\')">Login karo</span>';
     }
 }
+
+// ====== ਐਡਮਿਨ ਚੈੱਕ ਕਰਨ ਵਾਲਾ ਆਸਾਨ ਕੋਡ ======
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        // ਜੇਕਰ ਲਾਗਿਨ ਕਰਨ ਵਾਲੀ ਈਮੇਲ ਤੁਹਾਡੀ ਐਡਮਿਨ ਈਮੇਲ ਹੈ
+        if (user.email === "ppb1testapp@protonmail.com") {
+            alert("Welcome ਐਡਮਿਨ ਸਾਹਿਬ! ⚙️");
+            
+            // ਇਹ ਲਾਈਨ ਤੁਹਾਡੇ ਡੈਸ਼ਬੋਰਡ ਉੱਤੇ ਐਡਮਿਨ ਪੈਨਲ ਦਾ ਬਟਨ ਦਿਖਾ ਦੇਵੇਗੀ
+            const adminBtn = document.getElementById('admin-panel-btn');
+            if(adminBtn) {
+                adminBtn.style.display = 'block';
+            }
+        }
+    }
+});
