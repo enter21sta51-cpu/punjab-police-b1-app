@@ -3,194 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ਪੰਜਾਬ ਪੁਲਿਸ ਬੀ1 ਟੈਸਟ ਐਪ | Punjab Police B1 TEST App</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Punjab Police B1 TEST App</title>
+    
     <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e3a8a">
+    
+    <link rel="stylesheet" href="style.css">
+
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
 
-    <header>
-        <div class="logo">🚨 PB Police B1 Test</div>
-        <div class="nav-right">
-            <span id="streak-badge" style="display:none;">🔥 <span id="streak-count">0</span> Days</span>
-            <button id="theme-toggle">🌙 Dark Mode</button>
-            <button id="logout-btn" style="display:none;">Logout</button>
-        </div>
-    </header>
-
-    <main id="app-container">
-        <section id="auth-screen" class="view-section">
-            <div class="card">
-                <div class="tabs">
-                    <button id="tab-login" class="active">Login</button>
-                    <button id="tab-register">Register</button>
-                </div>
-
-                <form id="login-form">
-                    <h2>Log In</h2>
-                    <input type="email" id="login-email" placeholder="ਈਮੇਲ (Email)" required>
-                    <input type="password" id="login-password" placeholder="ਪਾਸਵਰਡ (Password)" required>
-                    <button type="submit" class="btn-block">Login</button>
-                </form>
-
-                <form id="register-form" style="display: none;">
-                    <h2>New Registration</h2>
-                    <input type="text" id="reg-name" placeholder="ਪੂਰਾ ਨਾਮ (Full Name)" required>
-                    <input type="email" id="reg-email" placeholder="ਈਮੇਲ (Email)" required>
-                    <input type="password" id="reg-password" placeholder="ਪਾਸਵਰਡ (Password)" required>
-                    <input type="tel" id="reg-phone" placeholder="ਮੋਬਾਈਲ ਨੰਬਰ (+911234567890)" value="+91" required>
-                    <input type="text" id="reg-referral" placeholder="Referral Code (Optional)">
-                    
-                    <div id="recaptcha-container"></div>
-                    <button type="button" id="send-otp-btn" class="btn-block">Send OTP</button>
-                    
-                    <div id="otp-section" style="display:none; margin-top:15px;">
-                        <input type="text" id="otp-input" placeholder="Enter 6 Digit OTP">
-                        <button type="submit" class="btn-block btn-success">Verify & Register</button>
-                    </div>
-                </form>
+    <div id="auth-screen" class="view">
+        <div class="auth-container">
+            <h2>🚨 Punjab Police B1 Test</h2>
+            <p>ਪ੍ਰੀਖਿਆ ਦੀ ਤਿਆਰੀ ਲਈ ਲਾਗਿਨ ਕਰੋ</p>
+            <div class="tabs">
+                <button id="login-tab" class="active" onclick="switchAuthTab('login')">Login</button>
+                <button id="register-tab" onclick="switchAuthTab('register')">Register</button>
             </div>
-        </section>
-
-        <section id="dashboard-screen" class="view-section" style="display:none;">
-            <div class="welcome-box">
-                <h2>ਜੀ ਆਇਆਂ ਨੂੰ, <span id="user-display-name">Candidate</span>!</h2>
-                <p>Status: <span id="sub-status-badge" class="badge-free">Free</span></p>
-            </div>
-
-            <div class="menu-grid">
-                <div class="menu-card" onclick="app.switchView('test-selection-screen')">📝 <h3>Mock Test</h3><p>ਤਿਆਰੀ ਦੀ ਪਰਖ ਕਰੋ</p></div>
-                <div class="menu-card" onclick="app.switchView('study-screen')">📚 <h3>Study Material</h3><p>100% ਫ੍ਰੀ ਨੋਟਸ</p></div>
-                <div class="menu-card" onclick="app.switchView('leaderboard-screen')">🏆 <h3>Leaderboard</h3><p>ਰੈਂਕ ਚੈੱਕ ਕਰੋ</p></div>
-                <div class="menu-card" onclick="app.switchView('history-screen')">📊 <h3>History & Mistakes</h3><p>ਪੁਰਾਣੇ ਰਿਕਾਰਡ</p></div>
-                <div class="menu-card" onclick="app.switchView('pricing-screen')">💎 <h3>Premium Plans</h3><p>Unlock All Tests</p></div>
-                <div class="menu-card" id="admin-tile" onclick="app.switchView('admin-screen')" style="display:none; background:#ffeb3b; color:#000;">⚙️ <h3>Admin Panel</h3><p>Manage App</p></div>
-            </div>
-
-            <div class="card refer-box">
-                <h3>📢 Refer & Earn</h3>
-                <p>ਆਪਣੇ ਦੋਸਤਾਂ ਨਾਲ ਰੈਫਰਲ ਕੋਡ ਸ਼ੇਅਰ ਕਰੋ: <strong id="my-referral-code">---</strong></p>
-            </div>
-        </section>
-
-        <section id="pricing-screen" class="view-section" style="display:none;">
-            <button class="btn-back" onclick="app.switchView('dashboard-screen')">⬅️ Back</button>
-            <div class="card">
-                <h2>Premium Plans Unlock ਕਰੋ</h2>
-                <p>ਪਹਿਲਾ ਟੈਸਟ ਸਭ ਲਈ 100% ਮੁਫ਼ਤ (Free Trial) ਹੈ।</p>
-                <div class="pricing-grid">
-                    <div class="price-card">
-                        <h3>Pay Per Test</h3>
-                        <p class="price">₹20 <span>/ ਪ੍ਰਤੀ ਟੈਸਟ</span></p>
-                        <button onclick="app.initiatePayment('per_test', 20)">Buy Single Test</button>
-                    </div>
-                    <div class="price-card popular">
-                        <h3>Monthly Unlimited</h3>
-                        <p class="price">₹149 <span>/ ਮਹੀਨਾ</span></p>
-                        <button onclick="app.initiatePayment('monthly', 149)">Subscribe Now</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="test-selection-screen" class="view-section" style="display:none;">
-            <button class="btn-back" onclick="app.switchView('dashboard-screen')">⬅️ Back</button>
-            <h2>ਉਪਲਬਧ Mock Tests</h2>
-            <div id="tests-list" class="list-container">
-                </div>
-        </section>
-
-        <section id="test-window-screen" class="view-section" style="display:none;">
-            <div class="test-header">
-                <span id="test-timer">Time: 10:00</span>
-                <div class="progress-container"><div id="test-progress"></div></div>
-            </div>
-            <div class="card" id="question-card">
-                <span class="badge" id="q-topic">Topic</span>
-                <h3 id="q-text" style="margin-top:10px;">ਸਵਾਲ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</h3>
-                <div class="options-container">
-                    <button class="option-btn" id="opt-A" onclick="app.selectOption('A')">A) Option</button>
-                    <button class="option-btn" id="opt-B" onclick="app.selectOption('B')">B) Option</button>
-                    <button class="option-btn" id="opt-C" onclick="app.selectOption('C')">C) Option</button>
-                    <button class="option-btn" id="opt-D" onclick="app.selectOption('D')">D) Option</button>
-                </div>
-                <div class="test-nav">
-                    <button id="prev-q-btn" onclick="app.navigateQuestion(-1)">Previous</button>
-                    <button id="bookmark-q-btn" onclick="app.toggleBookmark()">⭐ Bookmark</button>
-                    <button id="next-q-btn" onclick="app.navigateQuestion(1)">Next</button>
-                </div>
-                <button id="submit-test-btn" class="btn-block btn-danger" style="margin-top:20px;" onclick="app.endTest()">Submit Test</button>
-            </div>
-        </section>
-
-        <section id="result-screen" class="view-section" style="display:none;">
-            <div class="card text-center">
-                <h2>ਟੈਸਟ ਦਾ ਨਤੀਜਾ (Result)</h2>
-                <div class="score-circle"><span id="final-score">0</span> / 10</div>
-                <p id="result-message">ਮਿਹਨਤ ਦੀ ਲੋੜ ਹੈ!</p>
-                <button class="btn-block" onclick="app.switchView('dashboard-screen')">Go to Dashboard</button>
-                <h3 style="margin-top:30px;">Answers Review</h3>
-                <div id="review-container"></div>
-            </div>
-        </section>
-
-        <section id="study-screen" class="view-section" style="display:none;">
-            <button class="btn-back" onclick="app.switchView('dashboard-screen')">⬅️ Back</button>
-            <h2>📚 Study Material (100% Free)</h2>
-            <div id="study-material-list"></div>
-        </section>
-
-        <section id="leaderboard-screen" class="view-section" style="display:none;">
-            <button class="btn-back" onclick="app.switchView('dashboard-screen')">⬅️ Back</button>
-            <h2>🏆 Top Candidates Leaderboard</h2>
-            <div class="card">
-                <table class="table">
-                    <thead>
-                        <tr><th>Rank</th><th>Name</th><th>Total Score</th></tr>
-                    </thead>
-                    <tbody id="leaderboard-rows"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="history-screen" class="view-section" style="display:none;">
-            <button class="btn-back" onclick="app.switchView('dashboard-screen')">⬅️ Back</button>
             
-            <h2>📊 Bookmark & Mistake Tracker</h2>
-            <div class="card">
-                <h3>⭐ Bookmarked Questions</h3>
-                <div id="bookmarks-list"></div>
+            <div id="auth-form-box">
+                <input type="email" id="auth-email" placeholder="ਈਮੇਲ (Email)" required>
+                <input type="password" id="auth-password" placeholder="ਪਾਸਵਰਡ (Password)" required>
+                <input type="text" id="auth-name" placeholder="ਪੂਰਾ ਨਾਮ (Full Name)" style="display: none;">
+                <input type="tel" id="auth-phone" placeholder="ਮੋਬਾਈਲ ਨੰਬਰ (+91)" style="display: none;">
+                
+                <div id="recaptcha-container"></div>
+                <button id="auth-submit-btn" onclick="handleAuthSubmit()">Submit</button>
             </div>
-            <div class="card" style="margin-top:20px;">
-                <h3>❌ Weak Areas (Incorrect Questions)</h3>
-                <div id="mistakes-list"></div>
-            </div>
-        </section>
+        </div>
+    </div>
 
-        <section id="admin-screen" class="view-section" style="display:none;">
-            <button class="btn-back" onclick="app.switchView('dashboard-screen')">⬅️ Back</button>
-            <h2>⚙️ Admin Control Panel</h2>
-            <div class="card">
-                <h3>Add New Question</h3>
-                <form id="admin-add-q-form">
-                    <input type="text" id="adm-q" placeholder="Question Text" required>
-                    <input type="text" id="adm-a" placeholder="Option A" required>
-                    <input type="text" id="adm-b" placeholder="Option B" required>
-                    <input type="text" id="adm-c" placeholder="Option C" required>
-                    <input type="text" id="adm-d" placeholder="Option D" required>
-                    <select id="adm-correct"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select>
-                    <input type="text" id="adm-exp" placeholder="Explanation" required>
-                    <input type="text" id="adm-topic" placeholder="Topic (e.g., Law, GK)" required>
-                    <select id="adm-diff"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select>
-                    <button type="submit" class="btn-block">Save Question</button>
-                </form>
-            </div>
-        </section>
-    </main>
+    <div id="dashboard-screen" class="view" style="display: none;">
+        <div class="header">
+            <h3>🚨 PB Police B1 Test</h3>
+            <button onclick="toggleDarkMode()">🌙 Mode</button>
+        </div>
+        <div class="welcome-box">
+            <h2 id="user-welcome-name">ਜੀ ਆਇਆਂ ਨੂੰ!</h2>
+            <p>Status: <span id="user-status-badge">FREE</span></p>
+            <p>🔥 Streak: <span id="user-streak">0</span> Days</p>
+        </div>
+        
+        <div class="grid-menu">
+            <div class="menu-card" onclick="app.switchView('test-window-screen'); startMockTest();">📝 Mock Test</div>
+            <div class="menu-card" onclick="app.switchView('study-material-screen')">📚 Study Material</div>
+            <div class="menu-card" onclick="app.switchView('leaderboard-screen')">🏆 Leaderboard</div>
+            <div class="menu-card" onclick="app.switchView('history-screen')">📊 History & Mistakes</div>
+        </div>
+    </div>
+
+    <div id="test-window-screen" class="view" style="display: none;">
+        <div class="test-header">
+            <span id="test-timer">⏳ Time: 10:00</span>
+            <button onclick="submitTest()">Submit Test</button>
+        </div>
+        <div id="question-container">
+            <p class="loading">ਸਵਾਲ ਲੋਡ ਹੋ ਰਹੇ ਹਨ...</p>
+        </div>
+    </div>
+
+    <div id="study-material-screen" class="view" style="display: none;">
+        <button onclick="app.switchView('dashboard-screen')">⬅️ Back</button>
+        <h2>📚 Study Material</h2>
+        <div id="study-material-list"></div>
+    </div>
+
+    <div id="leaderboard-screen" class="view" style="display: none;">
+        <button onclick="app.switchView('dashboard-screen')">⬅️ Back</button>
+        <h2>🏆 Top Rankers</h2>
+        <div id="leaderboard-list"></div>
+    </div>
+
+    <div id="history-screen" class="view" style="display: none;">
+        <button onclick="app.switchView('dashboard-screen')">⬅️ Back</button>
+        <h2>📊 Your Progress & Mistakes</h2>
+        <div id="history-list"></div>
+    </div>
+
+    <footer style="text-align: center; padding: 20px; margin-top: 40px; font-size: 0.85rem; border-top: 1px solid #ccc; color: #555;">
+        <p>© 2026 Punjab Police B1 TEST App.</p>
+        <a href="privacy.html" style="color: #1e3a8a; text-decoration: none;">Privacy Policy</a> | 
+        <a href="terms.html" style="color: #1e3a8a; text-decoration: none;">Terms & Conditions</a> | 
+        <a href="refund.html" style="color: #1e3a8a; text-decoration: none;">Refund Policy</a> |
+        <a href="contact.html" style="color: #1e3a8a; text-decoration: none;">Contact Us</a>
+    </footer>
 
     <script src="app.js"></script>
 </body>
