@@ -17,7 +17,7 @@ const db = firebase.firestore();
 // ============================================
 // 💳 RAZORPAY KEY
 // ============================================
-const RAZORPAY_KEY_ID = "YOUR_RAZORPAY_TEST_KEY_ID";
+const RAZORPAY_KEY_ID = "rzp_test_T2n61qsuDtS9f5";
 
 // ============================================
 // 🔊 SOUND EFFECTS (Base64 Embedded)
