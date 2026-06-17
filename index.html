@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pa">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Punjab Police B1 Test Prep</title>
+  
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #3b82f6;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --text-light: #475569;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --radius: 12px;
+      --shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    body.dark-mode {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f1f5f9;
+      --text-light: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Sans Gurmukhi', 'Segoe UI', sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; transition: 0.3s; }
+
+    /* Auth */
+    #auth-section {
+      display: flex; align-items: center; justify-content: center; min-height: 100vh;
+      background: linear-gradient(135deg, var(--primary), #0f172a); padding: 1rem;
+    }
+    .auth-box {
+      background: var(--card); border-radius: var(--radius); padding: 2rem;
+      width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .auth-header { text-align: center; margin-bottom: 1.5rem; }
+    .auth-header h2 { color: var(--primary); font-size: 1.4rem; margin-bottom: 0.3rem; }
+    .auth-header p { color: var(--text-light); font-size: 0.85rem; }
+    
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.9rem; }
+    .form-input {
+      width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px;
+      font-size: 1rem; background: var(--card); color: var(--text);
+    }
+    .form-input:focus { outline: none; border-color: var(--primary-light); }
+    
+    .auth-toggle { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-light); }
+    .auth-toggle a { color: var(--primary); font-weight: 600; cursor: pointer; }
+
+    .btn {
+      display: inline-block; width: 100%; padding: 0.8rem; background: var(--primary);
+      color: white; border: none; border-radius: 8px; cursor: pointer;
+      font-weight: 600; font-size: 1rem; margin-top: 0.5rem;
+    }
+    .btn:hover { background: var(--primary-light); }
+    .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+    .btn-outline:hover { background: var(--primary); color: white; }
+    .btn-sm { width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; }
+
+    /* App */
+    #app-container { display: none; }
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white; padding: 1.2rem 1rem; text-align: center;
+      box-shadow: var(--shadow); position: relative;
+    }
+    header h1 { font-size: 1.4rem; margin-bottom: 0.2rem; }
+    header p { opacity: 0.9; font-size: 0.85rem; }
+    
+    .header-controls {
+      position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%);
+      display: flex; gap: 0.3rem; flex-direction: column; align-items: flex-end;
+    }
+    .header-btn {
+      background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
+      color: white; padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer;
+      font-size: 0.75rem; font-weight: 600;
+    }
+
+    nav {
+      display: flex; justify-content: center; gap: 0.5rem; padding: 0.8rem;
+      background: var(--card); box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      position: sticky; top: 0; z-index: 10; flex-wrap: wrap;
+    }
+    nav button {
+      padding: 0.5rem 0.8rem; border: 2px solid var(--primary);
+      background: transparent; color: var(--primary); border-radius: 8px;
+      cursor: pointer; font-weight: 600; font-size: 0.85rem;
+    }
+    nav button.active, nav button:hover { background: var(--primary); color: white; }
+
+    main { max-width: 900px; margin: 1.5rem auto; padding: 0 1rem; }
+    .section { display: none; animation: fadeIn 0.3s ease; }
+    .section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .card {
+      background: var(--card); border-radius: var(--radius); padding: 1.5rem;
+      box-shadow: var(--shadow); margin-bottom: 1.2rem;
+    }
+    .card h2 { color: var(--primary); margin-bottom: 0.8rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; font-size: 1.2rem; }
+    .card p, .card ul { margin-bottom: 1rem; color: var(--text-light); }
+    .card ul { padding-left: 1.2rem; }
+
+    .topic-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem; margin-top: 1rem;
+    }
+    .topic-card {
+      background: var(--card); border: 2px solid #e2e8f0; border-radius: var(--radius);
+      padding: 1.2rem; cursor: pointer; transition: 0.2s;
+    }
+    .topic-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+    .topic-card h3 { color: var(--primary); margin-bottom: 0.5rem; font-size: 1rem; }
+    .topic-card p { font-size: 0.85rem; color: var(--text-light); margin: 0; }
+    .topic-card .count { 
+      display: inline-block; background: var(--primary); color: white;
+      padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; margin-top: 0.5rem;
+    }
+
+    /* Quiz */
+    .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+    .progress-bar { height: 6px; background: #e2e8f0; border-radius: 4px; margin: 1rem 0; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--success); width: 0%; transition: 0.3s; }
+    .timer { background: var(--warning); color: white; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: bold; }
+    
+    .question-box { font-size: 1.05rem; margin-bottom: 1rem; font-weight: 500; }
+    .options { display: grid; gap: 0.8rem; }
+    .option {
+      padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer;
+      transition: 0.2s;
+    }
+    .option:hover { border-color: var(--primary-light); background: #f1f5f9; }
+    .option.selected { border-color: var(--primary); background: #eff6ff; }
+    .option.correct { border-color: var(--success); background: #ecfdf5; }
+    .option.wrong { border-color: var(--danger); background: #fef2f2; }
+    
+    .quiz-controls { display: flex; gap: 0.8rem; margin-top: 1.5rem; flex-wrap: wrap; }
+    .quiz-controls .btn { width: auto; flex: 1; }
+
+    .result-box { text-align: center; padding: 1.5rem; }
+    .score-circle {
+      width: 120px; height: 120px; border-radius: 50%; background: var(--primary);
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem; font-weight: bold; margin: 0 auto 1rem;
+    }
+
+    .leaderboard-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.8rem; border-bottom: 1px solid #e2e8f0;
+    }
+    .rank { font-weight: bold; color: var(--primary); min-width: 40px; }
+
+    .streak-badge {
+      display: inline-block; background: var(--warning); color: white;
+      padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem;
+      font-weight: 600; margin-left: 0.3rem;
+    }
+
+    .loader { text-align: center; padding: 2rem; color: var(--text-light); }
+    .spinner {
+      border: 3px solid #e2e8f0; border-top: 3px solid var(--primary);
+      border-radius: 50%; width: 40px; height: 40px;
+      animation: spin 1s linear infinite; margin: 0 auto 1rem;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    footer { 
+      text-align: center; padding: 2rem 1rem; color: var(--text-light); 
+      font-size: 0.85rem; background: var(--card); margin-top: 2rem;
+    }
+    .footer-links { 
+      display: flex; justify-content: center; gap: 1rem; margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .footer-links a { 
+      color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.85rem;
+    }
+    .footer-links a:hover { text-decoration: underline; }
+
+    /* Sound toggle */
+    .sound-toggle {
+      position: fixed; bottom: 1rem; right: 1rem;
+      background: var(--primary); color: white;
+      width: 45px; height: 45px; border-radius: 50%;
+      border: none; cursor: pointer; font-size: 1.2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 100;
+    }
+
+    @media (max-width: 600px) {
+      header h1 { font-size: 1.2rem; }
+      .header-controls { position: static; transform: none; margin-top: 0.8rem; flex-direction: row; justify-content: center; }
+      nav { gap: 0.3rem; }
+      nav button { padding: 0.4rem 0.6rem; font-size: 0.75rem; }
+      .quiz-controls { flex-direction: column; }
+      .quiz-controls .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUTH SECTION -->
+  <section id="auth-section">
+    <!-- LOGIN FORM -->
+    <div id="login-form" class="auth-box">
+      <div class="auth-header">
+        <h2>👮‍♂️ Punjab Police B1 Test</h2>
+        <p>Constable → Head Constable ਪ੍ਰਮੋਸ਼ਨ ਟੈਸਟ</p>
+      </div>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>ਈਮੇਲ</label>
+          <input type="email" id="login-email" class="form-input" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label>ਪਾਸਵਰਡ</label>
+          <input type="password" id="login-pass" class="form-input" placeholder="ਪਾਸਵਰਡ ਦਰਜ ਕਰੋ" required>
+        </div>
+        <button type="submit" class="btn">🔓 ਲੌਗਇਨ</button>
+      </form>
+      <div class="auth-toggle">
+        ਅਕਾਊਂਟ ਨਹੀਂ ਹੈ? <a onclick="toggleAuthMode('register')">ਰਜਿਸਟਰ ਕਰੋ</a>
+      </div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="register-form" class="auth-box" style="display:none;">
+      <div class="auth-header">
+        <h2>📝 ਨਵਾਂ ਅਕਾਊਂਟ ਬਣਾਓ</h2>
+        <p>4 ਸਟੈਪਸ ਵਿੱਚ ਰਜਿਸਟਰ ਕਰੋ</p>
+      </div>
+      
+      <!-- Step 1: Basic Info -->
+      <div id="reg-step1">
+        <div class="form-group">
+          <label>ਪੂਰਾ ਨਾਮ</label>
+          <input type="text" id="reg-name" class="form-input" placeholder="ਜਿਵੇਂ: ਹਰਪ੍ਰੀਤ ਸਿੰਘ" required>
+        </div>
+        <div class="form-group">
+          <label>ਈਮੇਲ</label>
+          <input type="email" id="reg-email" class="form-input" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label>ਪਾਸਵਰਡ (ਘੱਟੋ-ਘੱਟ 6 ਅੱਖਰ)</label>
+          <input type="password" id="reg-pass" class="form-input" placeholder="ਮਜ਼ਬੂਤ ਪਾਸਵਰਡ" minlength="6" required>
+        </div>
+        <button class="btn" onclick="goToStep2()">ਅਗਲਾ ➡️ (ਮੋਬਾਈਲ ਵੈਰੀਫਾਈ)</button>
+      </div>
+
+      <!-- Step 2: Mobile OTP -->
+      <div id="reg-step2" style="display:none;">
+        <div class="form-group">
+          <label>ਮੋਬਾਈਲ ਨੰਬਰ (+91)</label>
+          <input type="tel" id="reg-phone" class="form-input" placeholder="+91 9876543210" required>
+        </div>
+        <button class="btn" onclick="sendOTP()">📱 OTP ਭੇਜੋ</button>
+      </div>
+
+      <!-- Step 3: Verify OTP -->
+      <div id="reg-step3" style="display:none;">
+        <div class="form-group">
+          <label>OTP ਦਰਜ ਕਰੋ (6 ਅੰਕ)</label>
+          <input type="text" id="reg-otp" class="form-input" placeholder="6-ਅੰਕਾਂ ਦਾ OTP" maxlength="6" required>
+        </div>
+        <button class="btn" onclick="verifyOTPAndRegister()">✅ ਵੈਰੀਫਾਈ ਅਤੇ ਰਜਿਸਟਰ ਕਰੋ</button>
+      </div>
+
+      <div class="auth-toggle">
+        ਪਹਿਲਾਂ ਹੀ ਅਕਾਊਂਟ ਹੈ? <a onclick="toggleAuthMode('login')">ਲੌਗਇਨ ਕਰੋ</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- APP -->
+  <div id="app-container">
+    <header>
+      <h1>📚 Punjab Police B1 Test Prep</h1>
+      <p id="user-greeting">ਸਵਾਗਤ ਹੈ! <span id="streak-badge" class="streak-badge" style="display:none;">🔥 0 ਦਿਨ</span></p>
+      <div class="header-controls">
+        <button class="header-btn" onclick="toggleDarkMode()">🌙</button>
+        <button class="header-btn" onclick="handleLogout()">🚪 ਲੌਗਆਊਟ</button>
+      </div>
+    </header>
+
+    <nav>
+      <button class="nav-btn active" data-target="home">🏠 ਹੋਮ</button>
+      <button class="nav-btn" data-target="study">📖 ਸਟੱਡੀ</button>
+      <button class="nav-btn" data-target="test">📝 ਟੈਸਟ</button>
+      <button class="nav-btn" data-target="leaderboard">🏆 ਲੀਡਰਬੋਰਡ</button>
+      <button class="nav-btn" data-target="history">📊 ਹਿਸਟਰੀ</button>
+    </nav>
+
+    <main>
+      <!-- HOME -->
+      <section id="home" class="section active">
+        <div class="card">
+          <h2>ਸਵਾਗਤ ਹੈ, ਪੰਜਾਬ ਪੁਲਿਸ ਪਰਿਵਾਰ! 👮‍♂️</h2>
+          <p>ਇਹ ਐਪ <strong>Constable → Head Constable</strong> ਪ੍ਰਮੋਸ਼ਨ (B1 Test) ਲਈ ਤਿਆਰ ਕੀਤੀ ਗਈ ਹੈ।</p>
+          <ul>
+            <li>✅ <strong>6 ਵਿਸ਼ੇ:</strong> PP Rules, PP Act, BNSS/BNS/BSA, ਵਿਭਾਗੀ ਹੁਕਮ, GK, Math</li>
+            <li>✅ <strong>ਸਟੱਡੀ:</strong> 100% ਫ੍ਰੀ</li>
+            <li>✅ <strong>ਪਹਿਲਾ ਟੈਸਟ:</strong> ਫ੍ਰੀ ਟ੍ਰਾਇਲ</li>
+            <li>✅ <strong>ਲੀਡਰਬੋਰਡ:</strong> ਦੂਜੇ ਕਰਮਚਾਰੀਆਂ ਨਾਲ ਮੁਕਾਬਲਾ</li>
+          </ul>
+          <button class="btn" onclick="switchSection('study')">📖 ਸਟੱਡੀ ਸ਼ੁਰੂ ਕਰੋ</button>
+          <button class="btn btn-outline" onclick="switchSection('test')">📝 ਟੈਸਟ ਦਿਓ</button>
+        </div>
+      </section>
+
+      <!-- STUDY -->
+      <section id="study" class="section">
+        <div class="card">
+          <h2>📘 ਵਿਸ਼ੇ ਚੁਣੋ (100% ਫ੍ਰੀ)</h2>
+          <div class="topic-grid" id="topics-grid">
+            <div class="loader"><div class="spinner"></div>ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</div>
+          </div>
+        </div>
+        <div id="topic-content" class="card" style="display:none;">
+          <button class="btn btn-outline btn-sm" onclick="backToTopics()">← ਵਾਪਸ</button>
+          <h2 id="topic-title" style="margin-top: 1rem;"></h2>
+          <div id="topic-material"></div>
+        </div>
+      </section>
+
+      <!-- TEST -->
+      <section id="test" class="section">
+        <div id="test-home" class="card">
+          <h2>📝 ਵਿਸ਼ਾ ਚੁਣੋ</h2>
+          <div class="topic-grid" id="test-topics-grid">
+            <div class="loader"><div class="spinner"></div>ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</div>
+          </div>
+        </div>
+
+        <div id="quiz-container" class="card" style="display:none;">
+          <div class="quiz-header">
+            <div>ਸਵਾਲ <span id="q-num">1</span>/<span id="q-total">10</span></div>
+            <div class="timer">⏱️ <span id="timer">10:00</span></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+          <div class="question-box" id="question-text">ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</div>
+          <div class="options" id="options-container"></div>
+          <div class="quiz-controls">
+            <button class="btn btn-outline" onclick="prevQuestion()" id="prev-btn" disabled>⬅️ ਪਿਛਲਾ</button>
+            <button class="btn" onclick="nextQuestion()" id="next-btn">ਅਗਲਾ ➡️</button>
+            <button class="btn" onclick="submitQuiz()" id="submit-btn" style="display:none;">✅ ਜਮ੍ਹਾਂ ਕਰੋ</button>
+          </div>
+        </div>
+
+        <div id="quiz-results" class="card result-box" style="display:none;">
+          <div class="score-circle" id="score-display">0/10</div>
+          <h2 id="result-msg">ਵਧੀਆ ਕੋਸ਼ਿਸ਼!</h2>
+          <p id="result-desc"></p>
+          <div id="review-section" style="text-align:left; margin-top:1.5rem;"></div>
+          <button class="btn" onclick="resetQuiz()">🔄 ਦੁਬਾਰਾ</button>
+          <button class="btn btn-outline" onclick="backToTestHome()">📝 ਹੋਰ ਟੈਸਟ</button>
+        </div>
+      </section>
+
+      <!-- LEADERBOARD -->
+      <section id="leaderboard" class="section">
+        <div class="card">
+          <h2>🏆 ਲੀਡਰਬੋਰਡ</h2>
+          <div id="leaderboard-list"><div class="loader"><div class="spinner"></div>ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</div></div>
+        </div>
+      </section>
+
+      <!-- HISTORY -->
+      <section id="history" class="section">
+        <div class="card">
+          <h2>📊 ਮੇਰੀ ਹਿਸਟਰੀ</h2>
+          <div id="history-list"><div class="loader"><div class="spinner"></div>ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</div></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-links">
+        <a href="terms.html">📜 ਸ਼ਰਤਾਂ</a>
+        <a href="privacy.html">🔒 ਪ੍ਰਾਈਵੇਸੀ</a>
+        <a href="refund.html">💰 ਰੀਫੰਡ</a>
+        <a href="contact.html">📧 ਸੰਪਰਕ</a>
+      </div>
+      <p>© 2026 Punjab Police B1 Test Prep | ਸਿਰਫ਼ ਸਿੱਖਿਆ ਲਈ</p>
+      <p style="font-size: 0.8rem; margin-top: 0.5rem;">By Gyan Browser 👮‍♂️</p>
+    </footer>
+  </div>
+
+  <!-- Sound Toggle Button -->
+  <button class="sound-toggle" onclick="toggleSound()" id="sound-btn" style="display:none;" title="ਸਾਊਂਡ ਚਾਲੂ/ਬੰਦ">🔊</button>
+
+  <script src="app.js"></script>
+</body>
+</html>
