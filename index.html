@@ -6,7 +6,7 @@
     <title>Punjab Police B1 TEST App</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1e3a8a">
+    <meta name="theme-color" content="#0f0c1b">
     
     <link rel="stylesheet" href="style.css">
 
@@ -18,80 +18,107 @@
 </head>
 <body>
 
-    <div id="auth-screen" class="view">
-        <div class="auth-container">
-            <h2>🚨 Punjab Police B1 Test</h2>
-            <p>ਪ੍ਰੀਖਿਆ ਦੀ ਤਿਆਰੀ ਲਈ ਲਾਗਿਨ ਕਰੋ</p>
-            <div class="tabs">
-                <button id="login-tab" class="active" onclick="switchAuthTab('login')">Login</button>
-                <button id="register-tab" onclick="switchAuthTab('register')">Register</button>
+    <div id="auth-screen" class="view main-container">
+        <div class="auth-box">
+            <div class="logo-area">
+                <div class="police-logo">🧠</div>
+                <h2>Punjab Police B1 Test</h2>
+                <p class="subtitle">ਪ੍ਰੀਖਿਆ ਦੀ ਤਿਆਰੀ ਲਈ ਲਾਗਿਨ ਕਰੋ</p>
             </div>
             
-            <div id="auth-form-box">
-                <input type="email" id="auth-email" placeholder="ਈਮੇਲ (Email)" required>
-                <input type="password" id="auth-password" placeholder="ਪਾਸਵਰਡ (Password)" required>
-                <input type="text" id="auth-name" placeholder="ਪੂਰਾ ਨਾਮ (Full Name)" style="display: none;">
-                <input type="tel" id="auth-phone" placeholder="ਮੋਬਾਈਲ ਨੰਬਰ (+91)" style="display: none;">
+            <div class="tabs">
+                <button id="login-tab" class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+                <button id="register-tab" class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+            </div>
+            
+            <div id="auth-form-box" class="form-group">
+                <label class="input-label" id="label-email">EMAIL</label>
+                <input type="email" id="auth-email" placeholder="apna email dalein" required>
+                
+                <label class="input-label" id="label-password">PASSWORD</label>
+                <input type="password" id="auth-password" placeholder="password dalein" required>
+                
+                <label class="input-label reg-field" style="display: none;">FULL NAME</label>
+                <input type="text" id="auth-name" placeholder="apna naam dalein" class="reg-field" style="display: none;">
+                
+                <label class="input-label reg-field" style="display: none;">PHONE NUMBER</label>
+                <input type="tel" id="auth-phone" placeholder="mobile number dalein" class="reg-field" style="display: none;">
                 
                 <div id="recaptcha-container"></div>
-                <button id="auth-submit-btn" onclick="handleAuthSubmit()">Submit</button>
+                
+                <button id="auth-submit-btn" class="btn-primary" onclick="handleAuthSubmit()">Login Karo 🚀</button>
+            </div>
+            
+            <div class="toggle-text">
+                <p id="auth-toggle-msg">Account nahi hai? <span onclick="switchAuthTab('register')">Register karo</span></p>
             </div>
         </div>
     </div>
 
-    <div id="dashboard-screen" class="view" style="display: none;">
-        <div class="header">
-            <h3>🚨 PB Police B1 Test</h3>
-            <button onclick="toggleDarkMode()">🌙 Mode</button>
-        </div>
-        <div class="welcome-box">
-            <h2 id="user-welcome-name">ਜੀ ਆਇਆਂ ਨੂੰ!</h2>
-            <p>Status: <span id="user-status-badge">FREE</span></p>
-            <p>🔥 Streak: <span id="user-streak">0</span> Days</p>
-        </div>
-        
-        <div class="grid-menu">
-            <div class="menu-card" onclick="app.switchView('test-window-screen'); startMockTest();">📝 Mock Test</div>
-            <div class="menu-card" onclick="app.switchView('study-material-screen')">📚 Study Material</div>
-            <div class="menu-card" onclick="app.switchView('leaderboard-screen')">🏆 Leaderboard</div>
-            <div class="menu-card" onclick="app.switchView('history-screen')">📊 History & Mistakes</div>
-        </div>
-    </div>
-
-    <div id="test-window-screen" class="view" style="display: none;">
-        <div class="test-header">
-            <span id="test-timer">⏳ Time: 10:00</span>
-            <button onclick="submitTest()">Submit Test</button>
-        </div>
-        <div id="question-container">
-            <p class="loading">ਸਵਾਲ ਲੋਡ ਹੋ ਰਹੇ ਹਨ...</p>
+    <div id="dashboard-screen" class="view main-container" style="display: none;">
+        <div class="dashboard-box">
+            <div class="dashboard-header">
+                <h3>🚨 PB Police B1</h3>
+                <span class="user-badge" id="user-status-badge">FREE</span>
+            </div>
+            <div class="welcome-section">
+                <h2 id="user-welcome-name">Ji Aayan Nu!</h2>
+                <p>🔥 Streak: <span id="user-streak">0</span> Days</p>
+            </div>
+            
+            <div class="grid-menu">
+                <button class="menu-btn" onclick="switchView('test-window-screen'); startMockTest();">📝 Mock Test</button>
+                <button class="menu-btn" onclick="switchView('study-material-screen')">📚 Study Notes</button>
+                <button class="menu-btn" onclick="switchView('leaderboard-screen')">🏆 Leaderboard</button>
+                <button class="menu-btn" onclick="switchView('history-screen')">📊 Progress & Mistakes</button>
+            </div>
         </div>
     </div>
 
-    <div id="study-material-screen" class="view" style="display: none;">
-        <button onclick="app.switchView('dashboard-screen')">⬅️ Back</button>
-        <h2>📚 Study Material</h2>
-        <div id="study-material-list"></div>
+    <div id="test-window-screen" class="view main-container" style="display: none;">
+        <div class="dashboard-box">
+            <div class="dashboard-header">
+                <span id="test-timer" class="timer-tag">⏳ 10:00</span>
+                <button class="btn-submit-test" onclick="submitTest()">Submit</button>
+            </div>
+            <div id="question-container" class="quiz-area">
+                <p class="loading">ਸਵਾਲ ਲੋਡ ਹੋ ਰਹੇ ਹਨ...</p>
+            </div>
+        </div>
     </div>
 
-    <div id="leaderboard-screen" class="view" style="display: none;">
-        <button onclick="app.switchView('dashboard-screen')">⬅️ Back</button>
-        <h2>🏆 Top Rankers</h2>
-        <div id="leaderboard-list"></div>
+    <div id="study-material-screen" class="view main-container" style="display: none;">
+        <div class="dashboard-box">
+            <button class="btn-back" onclick="switchView('dashboard-screen')">⬅️ Back</button>
+            <h2>📚 Study Material</h2>
+            <div id="study-material-list" class="list-container"></div>
+        </div>
     </div>
 
-    <div id="history-screen" class="view" style="display: none;">
-        <button onclick="app.switchView('dashboard-screen')">⬅️ Back</button>
-        <h2>📊 Your Progress & Mistakes</h2>
-        <div id="history-list"></div>
+    <div id="leaderboard-screen" class="view main-container" style="display: none;">
+        <div class="dashboard-box">
+            <button class="btn-back" onclick="switchView('dashboard-screen')">⬅️ Back</button>
+            <h2>🏆 Top Rankers</h2>
+            <div id="leaderboard-list" class="list-container"></div>
+        </div>
     </div>
 
-    <footer style="text-align: center; padding: 20px; margin-top: 40px; font-size: 0.85rem; border-top: 1px solid #ccc; color: #555;">
+    <div id="history-screen" class="view main-container" style="display: none;">
+        <div class="dashboard-box">
+            <button class="btn-back" onclick="switchView('dashboard-screen')">⬅️ Back</button>
+            <h2>📊 Progress & Mistakes</h2>
+            <div id="history-list" class="list-container"></div>
+        </div>
+    </div>
+
+    <footer class="premium-footer">
         <p>© 2026 Punjab Police B1 TEST App.</p>
-        <a href="privacy.html" style="color: #1e3a8a; text-decoration: none;">Privacy Policy</a> | 
-        <a href="terms.html" style="color: #1e3a8a; text-decoration: none;">Terms & Conditions</a> | 
-        <a href="refund.html" style="color: #1e3a8a; text-decoration: none;">Refund Policy</a> |
-        <a href="contact.html" style="color: #1e3a8a; text-decoration: none;">Contact Us</a>
+        <div class="footer-links">
+            <a href="privacy.html">Privacy Policy</a> | 
+            <a href="terms.html">Terms & Conditions</a> | 
+            <a href="refund.html">Refund Policy</a> |
+            <a href="contact.html">Contact Us</a>
+        </div>
     </footer>
 
     <script src="app.js"></script>
