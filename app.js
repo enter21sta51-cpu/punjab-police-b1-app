@@ -539,3 +539,60 @@ firebase.auth().onAuthStateChanged((user) => {
         }
     }
 });
+
+// ====== LOGIN & REGISTER SUBMIT LOGIC ======
+function handleAuthSubmit() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const loginTab = document.getElementById('login-tab');
+    
+    // ਇਹ ਚੈੱਕ ਕਰੇਗਾ ਕਿ ਇਸ ਵੇਲੇ Login ਟੈਬ ਖੁੱਲ੍ਹੀ ਹੈ ਜਾਂ Register
+    const isLoginMode = loginTab.classList.contains('active');
+
+    if (!email || !password) {
+        alert("Kripya email ate password bharein!");
+        return;
+    }
+
+    if (isLoginMode) {
+        // ====== LOGIN LOGIC ======
+        auth.signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                console.log("Logged in successfully!");
+            })
+            .catch((error) => {
+                alert("Login Error: " + error.message);
+            });
+    } else {
+        // ====== REGISTER LOGIC ======
+        const name = document.getElementById('auth-name').value.trim();
+        const phone = document.getElementById('auth-phone').value.trim();
+
+        if (!name || !phone) {
+            alert("Kripya Full Name ate Phone Number v bharein!");
+            return;
+        }
+
+        // 1. ਫਾਇਰਬੇਸ ਵਿੱਚ ਨਵਾਂ ਯੂਜ਼ਰ ਬਣਾਓ
+        auth.createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                
+                // 2. ਯੂਜ਼ਰ ਦਾ ਡਾਟਾ ਫਾਇਰਸਟੋਰ (Database) ਵਿੱਚ ਸੇਵ ਕਰੋ
+                return db.collection('users').doc(user.uid).set({
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    subscriptionStatus: "free", // ਸ਼ੁਰੂ ਵਿੱਚ ਸਭ ਫ੍ਰੀ ਹੋਣਗੇ
+                    streak: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            })
+            .then(() => {
+                alert("Account successfully register ho gya ਹੈ! 🎉");
+            })
+            .catch((error) => {
+                alert("Registration Error: " + error.message);
+            });
+    }
+}
