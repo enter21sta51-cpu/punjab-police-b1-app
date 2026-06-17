@@ -152,7 +152,7 @@ const app = {
                 currentUser = user;
                 document.getElementById('logout-btn').style.display = 'inline-block';
                 // Check Admin Access
-                if(user.email === "admin@punjabpoliceb1.com") {
+                if(user.email === "ppb1testapp@protonmail.com") {
                     document.getElementById('admin-tile').style.display = 'block';
                 }
                 db.collection('users').doc(user.uid).get().then(doc => {
