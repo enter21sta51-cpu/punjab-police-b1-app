@@ -146,25 +146,45 @@ const app = {
             auth.signOut().then(() => location.reload());
         });
 
-        // Auth Observer
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('logout-btn').style.display = 'inline-block';
-                // Check Admin Access
-                if(user.email === "ppb1testapp@protonmail.com") {
-                    document.getElementById('admin-tile').style.display = 'block';
-                }
-                db.collection('users').doc(user.uid).get().then(doc => {
-                    userData = doc.data();
-                    this.updateStreak(user.uid);
-                    this.switchView('dashboard-screen');
-                });
-            } else {
-                this.switchView('auth-screen');
+        // ====== FIREBASE AUTH STATE CHANGES (SAFE VERSION) ======
+    auth.onAuthStateChanged((user) => {
+    if (user) {
+        console.log("User logged in:", user.email);
+        
+        // ⚙️ ਐਡਮਿਨ ਚੈੱਕ (ਤੁਹਾਡੀ ਪ੍ਰੋਟੋਨਮੇਲ ਆਈਡੀ)
+        if (user.email === ADMIN_EMAIL) {
+            console.log("Admin Access Granted! ⚙️");
+            const adminBtn = document.getElementById('admin-panel-btn');
+            if (adminBtn) {
+                adminBtn.style.display = 'block'; // ਐਡਮਿਨ ਬਟਨ ਦਿਖਾਓ
             }
+        }
+
+        // ਯੂਜ਼ਰ ਦਾ ਡਾਟਾ ਲੋਡ ਕਰੋ (ਬਿਨਾਂ ਕ੍ਰੈਸ਼ ਹੋਏ)
+        db.collection('users').doc(user.uid).get().then((doc) => {
+            if (doc.exists) {
+                // ਜੇਕਰ HTML ਵਿੱਚ ਇਹ ID ਮੌਜੂਦ ਹੋਵੇਗੀ, ਤਾਂ ਹੀ ਟੈਕਸਟ ਬਦਲੇਗਾ (ਨਹੀਂ ਤਾਂ ਕੋਡ ਕ੍ਰੈਸ਼ ਨਹੀਂ ਹੋਵੇਗਾ)
+                const welcomeElem = document.getElementById('user-welcome-name');
+                const badgeElem = document.getElementById('user-status-badge');
+                const streakElem = document.getElementById('user-streak');
+
+                if (welcomeElem) welcomeElem.innerText = `ਜੀ ਆਇਆਂ ਨੂੰ, ${doc.data().name}!`;
+                if (badgeElem) badgeElem.innerText = (doc.data().subscriptionStatus || "free").toUpperCase();
+                if (streakElem) streakElem.innerText = doc.data().streak || 0;
+            }
+            
+            // ਡੈਸ਼ਬੋਰਡ ਸਕ੍ਰੀਨ ਉੱਤੇ ਲੈ ਕੇ ਜਾਓ
+            switchView('dashboard-screen');
+        }).catch(err => {
+            console.log("Firestore data loading error:", err);
+            switchView('dashboard-screen');
         });
-    },
+
+    } else {
+        // ਜੇਕਰ ਲਾਗਿਨ ਨਹੀਂ ਹੈ, ਤਾਂ Auth (Login/Register) ਸਕ੍ਰੀਨ ਦਿਖਾਓ
+        switchView('auth-screen');
+    }
+});
 
     // ====== DAILY STREAK LOGIC ======
     updateStreak: function(uid) {
