@@ -2,12 +2,12 @@
 // 🔥 FIREBASE CONFIG (ਤੁਹਾਡੀਆਂ KEYS ਪਾਓ)
 // ============================================
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyC0KNFMjfrbBiifyP4kkcqxz-O8tzM2ak0",
+  authDomain: "punjabpoliceb1-821e2.firebaseapp.com",
+  projectId: "punjabpoliceb1-821e2",
+  storageBucket: "punjabpoliceb1-821e2.firebasestorage.app",
+  messagingSenderId: "62742364086",
+  appId: "1:62742364086:web:ef97fb8ad9f4d114bc8b17"
 };
 
 firebase.initializeApp(firebaseConfig);
