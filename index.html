@@ -1,434 +1,541 @@
-<!DOCTYPE html>
-<html lang="pa">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Punjab Police B1 Test Prep</title>
+// ============================================
+// 🔥 FIREBASE CONFIG (ਤੁਹਾਡੀਆਂ KEYS ਪਾਓ)
+// ============================================
+const firebaseConfig = {
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ============================================
+// 💳 RAZORPAY KEY
+// ============================================
+const RAZORPAY_KEY_ID = "YOUR_RAZORPAY_TEST_KEY_ID";
+
+// ============================================
+// 📚 6 ਵਿਸ਼ੇ (B1 Test Subjects)
+// ============================================
+const SUBJECTS = [
+  { id: 'pp_rules', name: 'Punjab Police Rules, 1934', icon: '📕', desc: 'PP Rules, ਚੈਪਟਰ ਅਤੇ ਨਿਯਮ' },
+  { id: 'pp_act', name: 'Punjab Police Act', icon: '📗', desc: 'ਪੰਜਾਬ ਪੁਲਿਸ ਐਕਟ ਦੀਆਂ ਧਾਰਾਵਾਂ' },
+  { id: 'bnss_bns_bsa', name: 'BNSS / BNS / BSA', icon: '📘', desc: 'ਨਵੇਂ ਕ੍ਰਿਮੀਨਲ ਕਾਨੂੰਨ 2023' },
+  { id: 'dept_orders', name: 'ਵਿਭਾਗੀ ਹੁਕਮ', icon: '📙', desc: 'Departmental Orders & SOPs' },
+  { id: 'gk', name: 'General Knowledge', icon: '🌍', desc: 'ਸਧਾਰਨ ਗਿਆਨ ਅਤੇ ਕਰੰਟ ਅਫੇਅਰਜ਼' },
+  { id: 'math', name: 'Mathematics', icon: '🔢', desc: 'ਗਣਿਤ ਅਤੇ ਰੀਜ਼ਨਿੰਗ' }
+];
+
+// ============================================
+// 🔐 AUTH
+// ============================================
+let confirmationResult = null;
+
+function handleLogin(e) {
+  e.preventDefault();
+  const phone = document.getElementById('login-phone').value.trim();
   
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  if (!phone.startsWith('+91') || phone.length < 13) {
+    alert('ਕਿਰਪਾ ਕਰਕੇ +91 ਨਾਲ ਪੂਰਾ ਮੋਬਾਈਲ ਨੰਬਰ ਪਾਓ');
+    return;
+  }
+
+  const recaptchaVerifier = new firebase.auth.RecaptchaVerifier('login-phone', {
+    'size': 'invisible'
+  });
+
+  auth.signInWithPhoneNumber(phone, recaptchaVerifier)
+    .then(result => {
+      confirmationResult = result;
+      document.getElementById('otp-section').style.display = 'block';
+      alert('✅ OTP ਭੇਜ ਦਿੱਤਾ ਗਿਆ ਹੈ!');
+    })
+    .catch(error => {
+      alert('ਗਲਤੀ: ' + error.message);
+      console.error(error);
+    });
+}
+
+function verifyOTP() {
+  const otp = document.getElementById('login-otp').value.trim();
   
-  <style>
-    :root {
-      --primary: #1e3a8a;
-      --primary-light: #3b82f6;
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #0f172a;
-      --text-light: #475569;
-      --success: #10b981;
-      --danger: #ef4444;
-      --warning: #f59e0b;
-      --radius: 12px;
-      --shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-    body.dark-mode {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --text: #f1f5f9;
-      --text-light: #94a3b8;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Sans Gurmukhi', 'Segoe UI', sans-serif; }
-    body { background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; transition: 0.3s; }
+  confirmationResult.confirm(otp)
+    .then(async result => {
+      const user = result.user;
+      const userDoc = await db.collection('users').doc(user.uid).get();
+      
+      if (userDoc.exists) {
+        await updateStreak(user.uid);
+        showApp(user.uid);
+      } else {
+        await db.collection('users').doc(user.uid).set({
+          phone: user.phoneNumber,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          hasTrialUsed: false,
+          subscriptionStatus: 'free',
+          streak: 1,
+          lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+          totalScore: 0
+        });
+        showApp(user.uid);
+      }
+    })
+    .catch(error => {
+      alert('❌ ਗਲਤ OTP! ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।');
+    });
+}
 
-    /* Auth */
-    #auth-section {
-      display: flex; align-items: center; justify-content: center; min-height: 100vh;
-      background: linear-gradient(135deg, var(--primary), #0f172a); padding: 1rem;
-    }
-    .auth-box {
-      background: var(--card); border-radius: var(--radius); padding: 2rem;
-      width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    }
-    .auth-header { text-align: center; margin-bottom: 1.5rem; }
-    .auth-header h2 { color: var(--primary); font-size: 1.4rem; margin-bottom: 0.3rem; }
-    .auth-header p { color: var(--text-light); font-size: 0.85rem; }
+async function updateStreak(uid) {
+  const today = new Date().toDateString();
+  const doc = await db.collection('users').doc(uid).get();
+  const data = doc.data();
+  const lastLogin = data.lastLogin?.toDate()?.toDateString();
+  
+  if (lastLogin === today) return;
+  
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  if (lastLogin === yesterday.toDateString()) {
+    await db.collection('users').doc(uid).update({
+      streak: firebase.firestore.FieldValue.increment(1),
+      lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } else {
+    await db.collection('users').doc(uid).update({
+      streak: 1,
+      lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+}
+
+async function showApp(uid) {
+  document.getElementById('auth-section').style.display = 'none';
+  document.getElementById('app-container').style.display = 'block';
+  
+  const doc = await db.collection('users').doc(uid).get();
+  const data = doc.data();
+  
+  if (data.streak > 0) {
+    document.getElementById('streak-badge').textContent = `🔥 ${data.streak} ਦਿਨ`;
+    document.getElementById('streak-badge').style.display = 'inline-block';
+  }
+  
+  loadTopics();
+  loadLeaderboard();
+  loadHistory(uid);
+}
+
+function handleLogout() {
+  if (confirm('ਕੀ ਤੁਸੀਂ ਲੌਗਆਊਟ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?')) {
+    auth.signOut();
+    location.reload();
+  }
+}
+
+// ============================================
+// 📚 STUDY - Firebase ਤੋਂ ਲੋਡ ਕਰੋ
+// ============================================
+async function loadTopics() {
+  const grid = document.getElementById('topics-grid');
+  const testGrid = document.getElementById('test-topics-grid');
+  
+  let topicsHTML = '';
+  
+  for (const subject of SUBJECTS) {
+    // ਹਰ ਵਿਸ਼ੇ ਲਈ ਸਵਾਲਾਂ ਦੀ ਗਿਣਤੀ ਗਿਣੋ
+    const snapshot = await db.collection('questions')
+      .where('topic', '==', subject.id)
+      .get();
     
-    .form-group { margin-bottom: 1rem; }
-    .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 600; font-size: 0.9rem; }
-    .form-input {
-      width: 100%; padding: 0.75rem; border: 2px solid #e2e8f0; border-radius: 8px;
-      font-size: 1rem; background: var(--card); color: var(--text);
-    }
-    .form-input:focus { outline: none; border-color: var(--primary-light); }
+    const count = snapshot.size;
     
-    .auth-toggle { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-light); }
-    .auth-toggle a { color: var(--primary); font-weight: 600; cursor: pointer; }
-
-    .btn {
-      display: inline-block; width: 100%; padding: 0.8rem; background: var(--primary);
-      color: white; border: none; border-radius: 8px; cursor: pointer;
-      font-weight: 600; font-size: 1rem; margin-top: 0.5rem;
-    }
-    .btn:hover { background: var(--primary-light); }
-    .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
-    .btn-outline:hover { background: var(--primary); color: white; }
-    .btn-sm { width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; }
-
-    /* App */
-    #app-container { display: none; }
-    header {
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      color: white; padding: 1.2rem 1rem; text-align: center;
-      box-shadow: var(--shadow); position: relative;
-    }
-    header h1 { font-size: 1.4rem; margin-bottom: 0.2rem; }
-    header p { opacity: 0.9; font-size: 0.85rem; }
-    
-    .header-controls {
-      position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%);
-      display: flex; gap: 0.3rem; flex-direction: column; align-items: flex-end;
-    }
-    .header-btn {
-      background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
-      color: white; padding: 0.3rem 0.6rem; border-radius: 6px; cursor: pointer;
-      font-size: 0.75rem; font-weight: 600;
-    }
-
-    nav {
-      display: flex; justify-content: center; gap: 0.5rem; padding: 0.8rem;
-      background: var(--card); box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-      position: sticky; top: 0; z-index: 10; flex-wrap: wrap;
-    }
-    nav button {
-      padding: 0.5rem 0.8rem; border: 2px solid var(--primary);
-      background: transparent; color: var(--primary); border-radius: 8px;
-      cursor: pointer; font-weight: 600; font-size: 0.85rem;
-    }
-    nav button.active, nav button:hover { background: var(--primary); color: white; }
-
-    main { max-width: 900px; margin: 1.5rem auto; padding: 0 1rem; }
-    .section { display: none; animation: fadeIn 0.3s ease; }
-    .section.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-    .card {
-      background: var(--card); border-radius: var(--radius); padding: 1.5rem;
-      box-shadow: var(--shadow); margin-bottom: 1.2rem;
-    }
-    .card h2 { color: var(--primary); margin-bottom: 0.8rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; font-size: 1.2rem; }
-    .card p, .card ul { margin-bottom: 1rem; color: var(--text-light); }
-    .card ul { padding-left: 1.2rem; }
-
-    .topic-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 1rem; margin-top: 1rem;
-    }
-    .topic-card {
-      background: var(--card); border: 2px solid #e2e8f0; border-radius: var(--radius);
-      padding: 1.2rem; cursor: pointer; transition: 0.2s;
-    }
-    .topic-card:hover { border-color: var(--primary); transform: translateY(-2px); }
-    .topic-card h3 { color: var(--primary); margin-bottom: 0.5rem; font-size: 1rem; }
-    .topic-card p { font-size: 0.85rem; color: var(--text-light); margin: 0; }
-    .topic-card .count { 
-      display: inline-block; background: var(--primary); color: white;
-      padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; margin-top: 0.5rem;
-    }
-
-    /* Quiz */
-    .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
-    .progress-bar { height: 6px; background: #e2e8f0; border-radius: 4px; margin: 1rem 0; overflow: hidden; }
-    .progress-fill { height: 100%; background: var(--success); width: 0%; transition: 0.3s; }
-    .timer { background: var(--warning); color: white; padding: 0.3rem 0.8rem; border-radius: 6px; font-weight: bold; }
-    
-    .question-box { font-size: 1.05rem; margin-bottom: 1rem; font-weight: 500; }
-    .options { display: grid; gap: 0.8rem; }
-    .option {
-      padding: 1rem; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer;
-      transition: 0.2s;
-    }
-    .option:hover { border-color: var(--primary-light); background: #f1f5f9; }
-    .option.selected { border-color: var(--primary); background: #eff6ff; }
-    
-    .quiz-controls { display: flex; gap: 0.8rem; margin-top: 1.5rem; flex-wrap: wrap; }
-    .quiz-controls .btn { width: auto; flex: 1; }
-
-    .result-box { text-align: center; padding: 1.5rem; }
-    .score-circle {
-      width: 120px; height: 120px; border-radius: 50%; background: var(--primary);
-      color: white; display: flex; align-items: center; justify-content: center;
-      font-size: 2.2rem; font-weight: bold; margin: 0 auto 1rem;
-    }
-
-    .leaderboard-item {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 0.8rem; border-bottom: 1px solid #e2e8f0;
-    }
-    .rank { font-weight: bold; color: var(--primary); min-width: 40px; }
-
-    .streak-badge {
-      display: inline-block; background: var(--warning); color: white;
-      padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem;
-      font-weight: 600; margin-left: 0.3rem;
-    }
-
-    .loader { text-align: center; padding: 2rem; color: var(--text-light); }
-    .spinner {
-      border: 3px solid #e2e8f0; border-top: 3px solid var(--primary);
-      border-radius: 50%; width: 40px; height: 40px;
-      animation: spin 1s linear infinite; margin: 0 auto 1rem;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    /* Footer */
-    footer { 
-      text-align: center; padding: 2rem 1rem; color: var(--text-light); 
-      font-size: 0.85rem; background: var(--card); margin-top: 2rem;
-      border-top: 1px solid #e2e8f0;
-    }
-    .footer-links { 
-      display: flex; justify-content: center; gap: 1.2rem; margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-    .footer-links a { 
-      color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.9rem;
-      transition: 0.2s;
-    }
-    .footer-links a:hover { text-decoration: underline; color: var(--primary-light); }
-
-    /* Sound Toggle */
-    .sound-toggle {
-      position: fixed; bottom: 1rem; right: 1rem;
-      background: var(--primary); color: white;
-      width: 45px; height: 45px; border-radius: 50%;
-      border: none; cursor: pointer; font-size: 1.2rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      z-index: 100;
-    }
-
-    @media (max-width: 600px) {
-      header h1 { font-size: 1.2rem; }
-      .header-controls { position: static; transform: none; margin-top: 0.8rem; flex-direction: row; justify-content: center; }
-      nav { gap: 0.3rem; }
-      nav button { padding: 0.4rem 0.6rem; font-size: 0.75rem; }
-      .quiz-controls { flex-direction: column; }
-      .quiz-controls .btn { width: 100%; }
-      .footer-links { gap: 0.8rem; }
-      .footer-links a { font-size: 0.8rem; }
-    }
-        /* Auth Page Footer */
-    .auth-footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 0.8rem 1rem;
-      text-align: center;
-      font-size: 0.8rem;
-      color: var(--text-light);
-      z-index: 5;
-      border-top: 1px solid #e2e8f0;
-      box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
-    }
-    .auth-footer .footer-links {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-bottom: 0.5rem;
-      flex-wrap: wrap;
-    }
-    .auth-footer .footer-links a {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.85rem;
-      transition: 0.2s;
-    }
-    .auth-footer .footer-links a:hover {
-      text-decoration: underline;
-      color: var(--primary-light);
-    }
-    
-    /* Auth section ਨੂੰ ਹੇਠਾਂ ਥੋੜ੍ਹੀ ਥਾਂ ਦਿਓ ਤਾਂ ਜੋ footer content ਨੂੰ ਢੱਕੇ ਨਾ */
-    #auth-section {
-      padding-bottom: 5rem;
-    }
-    
-    /* Dark mode ਲਈ */
-    body.dark-mode .auth-footer {
-      background: rgba(30, 41, 59, 0.95);
-      border-top-color: #334155;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- AUTH SECTION -->
-  <section id="auth-section">
-    <!-- LOGIN FORM -->
-    <div id="login-form" class="auth-box">
-      <div class="auth-header">
-        <h2>👮‍♂️ Punjab Police B1 Test</h2>
-        <p>Constable → Head Constable ਪ੍ਰਮੋਸ਼ਨ ਟੈਸਟ</p>
+    topicsHTML += `
+      <div class="topic-card" onclick="openTopic('${subject.id}', '${subject.name}')">
+        <h3>${subject.icon} ${subject.name}</h3>
+        <p>${subject.desc}</p>
+        <span class="count">${count} ਸਵਾਲ</span>
       </div>
-      <form onsubmit="handleLogin(event)">
-        <div class="form-group">
-          <label>ਈਮੇਲ</label>
-          <input type="email" id="login-email" class="form-input" placeholder="your@email.com" required>
-        </div>
-        <div class="form-group">
-          <label>ਪਾਸਵਰਡ</label>
-          <input type="password" id="login-pass" class="form-input" placeholder="ਪਾਸਵਰਡ ਦਰਜ ਕਰੋ" required>
-        </div>
-        <button type="submit" class="btn">🔓 ਲੌਗਇਨ</button>
-      </form>
-      <div class="auth-toggle">
-        ਅਕਾਊਂਟ ਨਹੀਂ ਹੈ? <a onclick="toggleAuthMode('register')">ਰਜਿਸਟਰ ਕਰੋ</a>
+    `;
+  }
+  
+  grid.innerHTML = topicsHTML;
+  testGrid.innerHTML = topicsHTML.replace(/openTopic/g, 'startTopicTest');
+}
+
+async function openTopic(topicId, topicName) {
+  document.getElementById('topic-content').style.display = 'block';
+  document.getElementById('topic-title').textContent = topicName;
+  
+  const materialDiv = document.getElementById('topic-material');
+  materialDiv.innerHTML = '<div class="loader"><div class="spinner"></div>ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</div>';
+  
+  // Firebase ਤੋਂ ਸਟੱਡੀ ਮਟੀਰੀਅਲ ਲੋਡ ਕਰੋ
+  const snapshot = await db.collection('study_material')
+    .where('topic', '==', topicId)
+    .orderBy('order')
+    .get();
+  
+  if (snapshot.empty) {
+    materialDiv.innerHTML = '<p style="text-align:center; padding:2rem;">ਇਸ ਵਿਸ਼ੇ ਲਈ ਸਟੱਡੀ ਮਟੀਰੀਅਲ ਜਲਦੀ ਹੀ ਉਪਲਬਧ ਹੋਵੇਗਾ।</p>';
+    return;
+  }
+  
+  let html = '';
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    html += `
+      <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border-left: 4px solid var(--primary);">
+        <h3 style="color: var(--primary); margin-bottom: 0.5rem;">${data.heading}</h3>
+        <div style="color: var(--text-light); line-height: 1.8;">${data.content}</div>
       </div>
-    </div>
+    `;
+  });
+  
+  materialDiv.innerHTML = html;
+}
 
-    <!-- REGISTER FORM (No OTP - Sirf Mobile Number Collect) -->
-    <div id="register-form" class="auth-box" style="display:none;">
-      <div class="auth-header">
-        <h2>📝 ਨਵਾਂ ਅਕਾਊਂਟ ਬਣਾਓ</h2>
-        <p>ਆਪਣੀ ਜਾਣਕਾਰੀ ਭਰੋ</p>
+function backToTopics() {
+  document.getElementById('topic-content').style.display = 'none';
+}
+
+// ============================================
+// 📝 TEST - Firebase ਤੋਂ ਸਵਾਲ ਲੋਡ ਕਰੋ
+// ============================================
+let currentTest = [];
+let currentQuestion = 0;
+let userAnswers = [];
+let score = 0;
+let currentTopicId = '';
+let timeLeft = 600;
+let timerInterval;
+
+async function startTopicTest(topicId, topicName) {
+  // ਪੇਮੈਂਟ ਚੈੱਕ ਕਰੋ
+  const uid = auth.currentUser.uid;
+  const userDoc = await db.collection('users').doc(uid).get();
+  const userData = userDoc.data();
+  
+  if (userData.subscriptionStatus === 'free' && userData.hasTrialUsed) {
+    showPaymentOptions();
+    return;
+  }
+  
+  currentTopicId = topicId;
+  
+  // Firebase ਤੋਂ ਸਵਾਲ ਲੋਡ ਕਰੋ
+  const snapshot = await db.collection('questions')
+    .where('topic', '==', topicId)
+    .get();
+  
+  if (snapshot.empty) {
+    alert('ਇਸ ਵਿਸ਼ੇ ਲਈ ਹਾਲੇ ਕੋਈ ਸਵਾਲ ਉਪਲਬਧ ਨਹੀਂ ਹਨ।');
+    return;
+  }
+  
+  currentTest = [];
+  snapshot.forEach(doc => {
+    currentTest.push({ id: doc.id, ...doc.data() });
+  });
+  
+  // Randomize ਕਰੋ ਅਤੇ 10 ਸਵਾਲ ਲਓ
+  currentTest = currentTest.sort(() => Math.random() - 0.5).slice(0, 10);
+  
+  currentQuestion = 0;
+  userAnswers = new Array(currentTest.length).fill(null);
+  score = 0;
+  timeLeft = 600;
+  
+  document.getElementById('test-home').style.display = 'none';
+  document.getElementById('quiz-container').style.display = 'block';
+  document.getElementById('q-total').textContent = currentTest.length;
+  
+  renderQuestion();
+  startTimer();
+}
+
+function renderQuestion() {
+  const q = currentTest[currentQuestion];
+  document.getElementById('q-num').textContent = currentQuestion + 1;
+  document.getElementById('question-text').textContent = `${currentQuestion + 1}. ${q.question}`;
+  document.getElementById('progress').style.width = `${((currentQuestion + 1)/currentTest.length)*100}%`;
+
+  const optsDiv = document.getElementById('options-container');
+  optsDiv.innerHTML = '';
+  
+  const options = [q.optionA, q.optionB, q.optionC, q.optionD];
+  options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'option' + (userAnswers[currentQuestion] === i ? ' selected' : '');
+    div.textContent = opt;
+    div.onclick = () => selectOption(i);
+    optsDiv.appendChild(div);
+  });
+
+  document.getElementById('prev-btn').disabled = currentQuestion === 0;
+  document.getElementById('next-btn').style.display = currentQuestion === currentTest.length - 1 ? 'none' : 'inline-block';
+  document.getElementById('submit-btn').style.display = currentQuestion === currentTest.length - 1 ? 'inline-block' : 'none';
+}
+
+function selectOption(idx) {
+  userAnswers[currentQuestion] = idx;
+  renderQuestion();
+}
+
+function nextQuestion() { if(currentQuestion < currentTest.length - 1) { currentQuestion++; renderQuestion(); } }
+function prevQuestion() { if(currentQuestion > 0) { currentQuestion--; renderQuestion(); } }
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    const m = Math.floor(timeLeft / 60);
+    const s = timeLeft % 60;
+    document.getElementById('timer').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    if(timeLeft <= 0) submitQuiz();
+  }, 1000);
+}
+
+async function submitQuiz() {
+  clearInterval(timerInterval);
+  
+  // ਸਕੋਰ ਗਿਣੋ
+  score = 0;
+  currentTest.forEach((q, i) => {
+    const userAns = userAnswers[i];
+    const correctMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+    const correctIdx = correctMap[q.correctAnswer.toUpperCase()];
+    if (userAns === correctIdx) score++;
+  });
+  
+  // Firebase ਵਿੱਚ ਸੇਵ ਕਰੋ
+  const uid = auth.currentUser.uid;
+  const timeTaken = 600 - timeLeft;
+  
+  await db.collection('users').doc(uid)
+    .collection('testHistory').add({
+      topic: currentTopicId,
+      date: firebase.firestore.FieldValue.serverTimestamp(),
+      score: score,
+      total: currentTest.length,
+      timeTaken: timeTaken,
+      answers: userAnswers
+    });
+  
+  await db.collection('users').doc(uid).update({
+    totalScore: firebase.firestore.FieldValue.increment(score),
+    hasTrialUsed: true
+  });
+  
+  // Results ਦਿਖਾਓ
+  document.getElementById('quiz-container').style.display = 'none';
+  document.getElementById('quiz-results').style.display = 'block';
+  document.getElementById('score-display').textContent = `${score}/${currentTest.length}`;
+  
+  const percent = (score / currentTest.length) * 100;
+  document.getElementById('result-msg').textContent = 
+    percent >= 80 ? "🏆 ਬਹੁਤ ਵਧੀਆ!" : 
+    percent >= 50 ? "👍 ਵਧੀਆ ਪ੍ਰੋਗਰੈਸ!" : 
+    "📚 ਹੋਰ ਸਟੱਡੀ ਦੀ ਲੋੜ";
+  
+  document.getElementById('result-desc').textContent = 
+    percent >= 50 ? "ਤੁਸੀਂ B1 Test ਲਈ ਤਿਆਰ ਹੋ। ਅਭਿਆਸ ਜਾਰੀ ਰੱਖੋ!" : 
+    "ਸਟੱਡੀ ਸੈਕਸ਼ਨ ਤੋਂ ਰਿਵਾਈਜ਼ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਟੈਸਟ ਦਿਓ।";
+  
+  // Review ਬਣਾਓ
+  const rev = document.getElementById('review-section');
+  rev.innerHTML = '<h3 style="margin-bottom: 1rem;">📖 ਜਵਾਬ ਰਿਵਿਊ</h3>';
+  
+  currentTest.forEach((q, i) => {
+    const userAns = userAnswers[i] !== null ? [q.optionA, q.optionB, q.optionC, q.optionD][userAnswers[i]] : 'ਜਵਾਬ ਨਹੀਂ ਦਿੱਤਾ';
+    const correctMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3 };
+    const correctAns = [q.optionA, q.optionB, q.optionC, q.optionD][correctMap[q.correctAnswer.toUpperCase()]];
+    const isCorrect = userAnswers[i] === correctMap[q.correctAnswer.toUpperCase()];
+    
+    rev.innerHTML += `
+      <div style="margin: 1rem 0; padding: 1rem; background: #f8fafc; border-radius: 8px;">
+        <div style="font-weight: 600; margin-bottom: 0.5rem;">ਸ${i+1}: ${q.question}</div>
+        <div style="padding: 0.4rem; border-radius: 6px; background: ${isCorrect ? '#d1fae5' : '#fee2e2'};">
+          ਤੁਹਾਡਾ ਜਵਾਬ: ${userAns} ${isCorrect ? '✅' : '❌'}
+        </div>
+        ${!isCorrect ? `<div style="padding: 0.4rem; border-radius: 6px; background: #d1fae5; margin-top: 0.3rem;">ਸਹੀ ਜਵਾਬ: ${correctAns}</div>` : ''}
+        ${q.explanation ? `<div style="margin-top: 0.5rem; font-size: 0.9rem; color: #64748b;">💡 ${q.explanation}</div>` : ''}
       </div>
-      <form onsubmit="handleRegister(event)">
-        <div class="form-group">
-          <label>ਪੂਰਾ ਨਾਮ</label>
-          <input type="text" id="reg-name" class="form-input" placeholder="ਜਿਵੇਂ: ਹਰਪ੍ਰੀਤ ਸਿੰਘ" required>
+    `;
+  });
+  
+  loadHistory(uid);
+  loadLeaderboard();
+}
+
+function resetQuiz() {
+  document.getElementById('quiz-results').style.display = 'none';
+  document.getElementById('test-home').style.display = 'block';
+}
+
+function backToTestHome() {
+  resetQuiz();
+}
+
+// ============================================
+// 💰 PAYMENT
+// ============================================
+function showPaymentOptions() {
+  const choice = confirm(
+    'ਤੁਹਾਡਾ ਫ੍ਰੀ ਟ੍ਰਾਇਲ ਖਤਮ ਹੋ ਗਿਆ ਹੈ!\n\n' +
+    '✅ "ਹਾਂ" = ₹20 ਦਾ 1 ਟੈਸਟ ਖਰੀਦੋ\n' +
+    '❌ "ਨਹੀਂ" = ₹149 ਦਾ ਮਾਸਿਕ ਸਬਸਕ੍ਰਿਪਸ਼ਨ (ਅਨਲਿਮਿਟਡ)'
+  );
+  
+  if (choice) {
+    initiatePayment(10, 'per_test');
+  } else {
+    initiatePayment(99, 'monthly');
+  }
+}
+
+function initiatePayment(amount, type) {
+  const options = {
+    key: RAZORPAY_KEY_ID,
+    amount: amount * 100,
+    currency: 'INR',
+    name: 'Punjab Police B1 Test Prep',
+    description: type === 'per_test' ? 'ਇੱਕ ਟੈਸਟ' : 'ਮਾਸਿਕ ਸਬਸਕ੍ਰਿਪਸ਼ਨ',
+    handler: async function(response) {
+      const uid = auth.currentUser.uid;
+      const expiryDate = type === 'monthly' 
+        ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) 
+        : null;
+      
+      await db.collection('users').doc(uid).update({
+        subscriptionStatus: 'active',
+        hasTrialUsed: true,
+        paymentId: response.razorpay_payment_id,
+        subscriptionType: type,
+        subscriptionExpiry: expiryDate
+      });
+      
+      alert('✅ ਪੇਮੈਂਟ ਸਫਲ! ਹੁਣ ਤੁਸੀਂ ਟੈਸਟ ਦੇ ਸਕਦੇ ਹੋ।');
+      location.reload();
+    },
+    prefill: {
+      contact: auth.currentUser.phoneNumber
+    },
+    theme: { color: '#1e3a8a' }
+  };
+  
+  const rzp = new Razorpay(options);
+  rzp.open();
+}
+
+// ============================================
+// 🏆 LEADERBOARD
+// ============================================
+async function loadLeaderboard() {
+  const snapshot = await db.collection('users')
+    .orderBy('totalScore', 'desc')
+    .limit(10)
+    .get();
+  
+  const list = document.getElementById('leaderboard-list');
+  
+  if (snapshot.empty) {
+    list.innerHTML = '<p style="text-align:center; padding:2rem;">ਹਾਲੇ ਕੋਈ ਡਾਟਾ ਨਹੀਂ। ਪਹਿਲਾਂ ਟੈਸਟ ਦਿਓ!</p>';
+    return;
+  }
+  
+  let html = '';
+  let rank = 1;
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const phone = data.phone ? data.phone.slice(-4) : 'XXXX';
+    html += `
+      <div class="leaderboard-item">
+        <div>
+          <span class="rank">#${rank}</span>
+          <span>ਪੁਲਿਸ ਕਰਮਚਾਰੀ XXXX${phone}</span>
         </div>
-        <div class="form-group">
-          <label>ਈਮੇਲ</label>
-          <input type="email" id="reg-email" class="form-input" placeholder="your@email.com" required>
-        </div>
-        <div class="form-group">
-          <label>ਮੋਬਾਈਲ ਨੰਬਰ</label>
-          <input type="tel" id="reg-phone" class="form-input" placeholder="9876543210 (10 ਅੰਕ)" maxlength="10" required>
-        </div>
-        <div class="form-group">
-          <label>ਪਾਸਵਰਡ (ਘੱਟੋ-ਘੱਟ 6 ਅੱਖਰ)</label>
-          <input type="password" id="reg-pass" class="form-input" placeholder="ਮਜ਼ਬੂਤ ਪਾਸਵਰਡ" minlength="6" required>
-        </div>
-        <button type="submit" class="btn">🚀 ਰਜਿਸਟਰ ਕਰੋ</button>
-      </form>
-      <div class="auth-toggle">
-        ਪਹਿਲਾਂ ਹੀ ਅਕਾਊਂਟ ਹੈ? <a onclick="toggleAuthMode('login')">ਲੌਗਇਨ ਕਰੋ</a>
+        <div><strong>${data.totalScore || 0} ਅੰਕ</strong></div>
       </div>
-    </div>
-  </section>
+    `;
+    rank++;
+  });
+  
+  list.innerHTML = html;
+}
 
-  <!-- APP -->
-  <div id="app-container">
-    <header>
-      <h1>📚 Punjab Police B1 Test Prep</h1>
-      <p id="user-greeting">ਸਵਾਗਤ ਹੈ! <span id="streak-badge" class="streak-badge" style="display:none;">🔥 0 ਦਿਨ</span></p>
-      <div class="header-controls">
-        <button class="header-btn" onclick="toggleDarkMode()">🌙</button>
-        <button class="header-btn" onclick="handleLogout()">🚪 ਲੌਗਆਊਟ</button>
+// ============================================
+// 📊 HISTORY
+// ============================================
+async function loadHistory(uid) {
+  const snapshot = await db.collection('users').doc(uid)
+    .collection('testHistory')
+    .orderBy('date', 'desc')
+    .limit(20)
+    .get();
+  
+  const list = document.getElementById('history-list');
+  
+  if (snapshot.empty) {
+    list.innerHTML = '<p style="text-align:center; padding:2rem;">ਹਾਲੇ ਕੋਈ ਟੈਸਟ ਨਹੀਂ ਦਿੱਤਾ। ਪਹਿਲਾ ਟੈਸਟ ਦਿਓ!</p>';
+    return;
+  }
+  
+  let html = '';
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const date = data.date?.toDate()?.toLocaleDateString('pa-IN') || 'ਅੱਜ';
+    const subjectName = SUBJECTS.find(s => s.id === data.topic)?.name || data.topic;
+    html += `
+      <div class="leaderboard-item">
+        <div>
+          <div style="font-weight: 600;">${subjectName}</div>
+          <div style="font-size: 0.85rem; color: var(--text-light);">${date}</div>
+        </div>
+        <div><strong>${data.score}/${data.total}</strong></div>
       </div>
-    </header>
+    `;
+  });
+  
+  list.innerHTML = html;
+}
 
-    <nav>
-      <button class="nav-btn active" data-target="home">🏠 ਹੋਮ</button>
-      <button class="nav-btn" data-target="study">📖 ਸਟੱਡੀ</button>
-      <button class="nav-btn" data-target="test">📝 ਟੈਸਟ</button>
-      <button class="nav-btn" data-target="leaderboard">🏆 ਲੀਡਰਬੋਰਡ</button>
-      <button class="nav-btn" data-target="history">📊 ਹਿਸਟਰੀ</button>
-    </nav>
+// ============================================
+// 🌙 DARK MODE
+// ============================================
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+}
 
-    <main>
-      <!-- HOME -->
-      <section id="home" class="section active">
-        <div class="card">
-          <h2>ਸਵਾਗਤ ਹੈ, ਪੰਜਾਬ ਪੁਲਿਸ ਪਰਿਵਾਰ! 👮‍♂️</h2>
-          <p>ਇਹ ਐਪ <strong>Constable → Head Constable</strong> ਪ੍ਰਮੋਸ਼ਨ (B1 Test) ਲਈ ਤਿਆਰ ਕੀਤੀ ਗਈ ਹੈ।</p>
-          <ul>
-            <li>✅ <strong>6 ਵਿਸ਼ੇ:</strong> PP Rules, PP Act, BNSS/BNS/BSA, ਵਿਭਾਗੀ ਹੁਕਮ, GK, Math</li>
-            <li>✅ <strong>ਸਟੱਡੀ:</strong> 100% ਫ੍ਰੀ</li>
-            <li>✅ <strong>ਪਹਿਲਾ ਟੈਸਟ:</strong> ਫ੍ਰੀ ਟ੍ਰਾਇਲ</li>
-            <li>✅ <strong>ਲੀਡਰਬੋਰਡ:</strong> ਦੂਜੇ ਕਰਮਚਾਰੀਆਂ ਨਾਲ ਮੁਕਾਬਲਾ</li>
-          </ul>
-          <button class="btn" onclick="switchSection('study')">📖 ਸਟੱਡੀ ਸ਼ੁਰੂ ਕਰੋ</button>
-          <button class="btn btn-outline" onclick="switchSection('test')">📝 ਟੈਸਟ ਦਿਓ</button>
-        </div>
-      </section>
+if (localStorage.getItem('darkMode') === 'true') {
+  document.body.classList.add('dark-mode');
+}
 
-      <!-- STUDY -->
-      <section id="study" class="section">
-        <div class="card">
-          <h2>📘 ਵਿਸ਼ੇ ਚੁਣੋ (100% ਫ੍ਰੀ)</h2>
-          <div class="topic-grid" id="topics-grid">
-            <div class="loader"><div class="spinner"></div>ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</div>
-          </div>
-        </div>
-        <div id="topic-content" class="card" style="display:none;">
-          <button class="btn btn-outline btn-sm" onclick="backToTopics()">← ਵਾਪਸ</button>
-          <h2 id="topic-title" style="margin-top: 1rem;"></h2>
-          <div id="topic-material"></div>
-        </div>
-      </section>
+// ============================================
+// 🧭 NAVIGATION
+// ============================================
+function switchSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.nav-btn[data-target="${id}"]`).classList.add('active');
+}
 
-      <!-- TEST -->
-      <section id="test" class="section">
-        <div id="test-home" class="card">
-          <h2>📝 ਵਿਸ਼ਾ ਚੁਣੋ</h2>
-          <div class="topic-grid" id="test-topics-grid">
-            <div class="loader"><div class="spinner"></div>ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</div>
-          </div>
-        </div>
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchSection(btn.dataset.target));
+});
 
-        <div id="quiz-container" class="card" style="display:none;">
-          <div class="quiz-header">
-            <div>ਸਵਾਲ <span id="q-num">1</span>/<span id="q-total">10</span></div>
-            <div class="timer">⏱️ <span id="timer">10:00</span></div>
-          </div>
-          <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
-          <div class="question-box" id="question-text">ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</div>
-          <div class="options" id="options-container"></div>
-          <div class="quiz-controls">
-            <button class="btn btn-outline" onclick="prevQuestion()" id="prev-btn" disabled>⬅️ ਪਿਛਲਾ</button>
-            <button class="btn" onclick="nextQuestion()" id="next-btn">ਅਗਲਾ ➡️</button>
-            <button class="btn" onclick="submitQuiz()" id="submit-btn" style="display:none;">✅ ਜਮ੍ਹਾਂ ਕਰੋ</button>
-          </div>
-        </div>
-
-        <div id="quiz-results" class="card result-box" style="display:none;">
-          <div class="score-circle" id="score-display">0/10</div>
-          <h2 id="result-msg">ਵਧੀਆ ਕੋਸ਼ਿਸ਼!</h2>
-          <p id="result-desc"></p>
-          <div id="review-section" style="text-align:left; margin-top:1.5rem;"></div>
-          <button class="btn" onclick="resetQuiz()">🔄 ਦੁਬਾਰਾ</button>
-          <button class="btn btn-outline" onclick="backToTestHome()">📝 ਹੋਰ ਟੈਸਟ</button>
-        </div>
-      </section>
-
-      <!-- LEADERBOARD -->
-      <section id="leaderboard" class="section">
-        <div class="card">
-          <h2>🏆 ਲੀਡਰਬੋਰਡ</h2>
-          <div id="leaderboard-list"><div class="loader"><div class="spinner"></div>ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</div></div>
-        </div>
-      </section>
-
-      <!-- HISTORY -->
-      <section id="history" class="section">
-        <div class="card">
-          <h2>📊 ਮੇਰੀ ਹਿਸਟਰੀ</h2>
-          <div id="history-list"><div class="loader"><div class="spinner"></div>ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</div></div>
-        </div>
-            <!-- Auth Page Footer -->
-    <footer class="auth-footer">
-      <div class="footer-links">
-        <a href="terms.html" target="_blank">📜 ਸ਼ਰਤਾਂ</a>
-        <a href="privacy.html" target="_blank">🔒 ਪ੍ਰਾਈਵੇਸੀ</a>
-        <a href="refund.html" target="_blank">💰 ਰੀਫੰਡ</a>
-        <a href="contact.html" target="_blank">📧 ਸੰਪਰਕ</a>
-      </div>
-      <p>© 2026 Punjab Police B1 Test Prep | By Gyan Browser 👮‍♂️</p>
-    </footer>
-      </section>
-    </main>
-  </div>
-
-  <!-- Sound Toggle Button -->
-  <button class="sound-toggle" onclick="toggleSound()" id="sound-btn" style="display:none;" title="ਸਾਊਂਡ ਚਾਲੂ/ਬੰਦ">🔊</button>
-
-  <script src="app.js"></script>
-</body>
-</html>
+// ============================================
+// 🔍 AUTH STATE
+// ============================================
+auth.onAuthStateChanged(user => {
+  if (user) {
+    showApp(user.uid);
+  }
+});
