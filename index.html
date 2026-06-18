@@ -142,8 +142,6 @@
     }
     .option:hover { border-color: var(--primary-light); background: #f1f5f9; }
     .option.selected { border-color: var(--primary); background: #eff6ff; }
-    .option.correct { border-color: var(--success); background: #ecfdf5; }
-    .option.wrong { border-color: var(--danger); background: #fef2f2; }
     
     .quiz-controls { display: flex; gap: 0.8rem; margin-top: 1.5rem; flex-wrap: wrap; }
     .quiz-controls .btn { width: auto; flex: 1; }
@@ -175,20 +173,23 @@
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+    /* Footer */
     footer { 
       text-align: center; padding: 2rem 1rem; color: var(--text-light); 
       font-size: 0.85rem; background: var(--card); margin-top: 2rem;
+      border-top: 1px solid #e2e8f0;
     }
     .footer-links { 
-      display: flex; justify-content: center; gap: 1rem; margin-bottom: 1rem;
+      display: flex; justify-content: center; gap: 1.2rem; margin-bottom: 1rem;
       flex-wrap: wrap;
     }
     .footer-links a { 
-      color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.85rem;
+      color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.9rem;
+      transition: 0.2s;
     }
-    .footer-links a:hover { text-decoration: underline; }
+    .footer-links a:hover { text-decoration: underline; color: var(--primary-light); }
 
-    /* Sound toggle */
+    /* Sound Toggle */
     .sound-toggle {
       position: fixed; bottom: 1rem; right: 1rem;
       background: var(--primary); color: white;
@@ -205,6 +206,8 @@
       nav button { padding: 0.4rem 0.6rem; font-size: 0.75rem; }
       .quiz-controls { flex-direction: column; }
       .quiz-controls .btn { width: 100%; }
+      .footer-links { gap: 0.8rem; }
+      .footer-links a { font-size: 0.8rem; }
     }
   </style>
 </head>
@@ -234,15 +237,13 @@
       </div>
     </div>
 
-    <!-- REGISTER FORM -->
+    <!-- REGISTER FORM (No OTP - Sirf Mobile Number Collect) -->
     <div id="register-form" class="auth-box" style="display:none;">
       <div class="auth-header">
         <h2>📝 ਨਵਾਂ ਅਕਾਊਂਟ ਬਣਾਓ</h2>
-        <p>4 ਸਟੈਪਸ ਵਿੱਚ ਰਜਿਸਟਰ ਕਰੋ</p>
+        <p>ਆਪਣੀ ਜਾਣਕਾਰੀ ਭਰੋ</p>
       </div>
-      
-      <!-- Step 1: Basic Info -->
-      <div id="reg-step1">
+      <form onsubmit="handleRegister(event)">
         <div class="form-group">
           <label>ਪੂਰਾ ਨਾਮ</label>
           <input type="text" id="reg-name" class="form-input" placeholder="ਜਿਵੇਂ: ਹਰਪ੍ਰੀਤ ਸਿੰਘ" required>
@@ -252,30 +253,15 @@
           <input type="email" id="reg-email" class="form-input" placeholder="your@email.com" required>
         </div>
         <div class="form-group">
+          <label>ਮੋਬਾਈਲ ਨੰਬਰ</label>
+          <input type="tel" id="reg-phone" class="form-input" placeholder="9876543210 (10 ਅੰਕ)" maxlength="10" required>
+        </div>
+        <div class="form-group">
           <label>ਪਾਸਵਰਡ (ਘੱਟੋ-ਘੱਟ 6 ਅੱਖਰ)</label>
           <input type="password" id="reg-pass" class="form-input" placeholder="ਮਜ਼ਬੂਤ ਪਾਸਵਰਡ" minlength="6" required>
         </div>
-        <button class="btn" onclick="goToStep2()">ਅਗਲਾ ➡️ (ਮੋਬਾਈਲ ਵੈਰੀਫਾਈ)</button>
-      </div>
-
-      <!-- Step 2: Mobile OTP -->
-      <div id="reg-step2" style="display:none;">
-        <div class="form-group">
-          <label>ਮੋਬਾਈਲ ਨੰਬਰ (+91)</label>
-          <input type="tel" id="reg-phone" class="form-input" placeholder="+91 9876543210" required>
-        </div>
-        <button class="btn" onclick="sendOTP()">📱 OTP ਭੇਜੋ</button>
-      </div>
-
-      <!-- Step 3: Verify OTP -->
-      <div id="reg-step3" style="display:none;">
-        <div class="form-group">
-          <label>OTP ਦਰਜ ਕਰੋ (6 ਅੰਕ)</label>
-          <input type="text" id="reg-otp" class="form-input" placeholder="6-ਅੰਕਾਂ ਦਾ OTP" maxlength="6" required>
-        </div>
-        <button class="btn" onclick="verifyOTPAndRegister()">✅ ਵੈਰੀਫਾਈ ਅਤੇ ਰਜਿਸਟਰ ਕਰੋ</button>
-      </div>
-
+        <button type="submit" class="btn">🚀 ਰਜਿਸਟਰ ਕਰੋ</button>
+      </form>
       <div class="auth-toggle">
         ਪਹਿਲਾਂ ਹੀ ਅਕਾਊਂਟ ਹੈ? <a onclick="toggleAuthMode('login')">ਲੌਗਇਨ ਕਰੋ</a>
       </div>
@@ -384,12 +370,13 @@
       </section>
     </main>
 
+    <!-- FOOTER with all 4 links -->
     <footer>
       <div class="footer-links">
-        <a href="terms.html">📜 ਸ਼ਰਤਾਂ</a>
-        <a href="privacy.html">🔒 ਪ੍ਰਾਈਵੇਸੀ</a>
-        <a href="refund.html">💰 ਰੀਫੰਡ</a>
-        <a href="contact.html">📧 ਸੰਪਰਕ</a>
+        <a href="terms.html" target="_blank">📜 ਸ਼ਰਤਾਂ</a>
+        <a href="privacy.html" target="_blank">🔒 ਪ੍ਰਾਈਵੇਸੀ</a>
+        <a href="refund.html" target="_blank">💰 ਰੀਫੰਡ</a>
+        <a href="contact.html" target="_blank">📧 ਸੰਪਰਕ</a>
       </div>
       <p>© 2026 Punjab Police B1 Test Prep | ਸਿਰਫ਼ ਸਿੱਖਿਆ ਲਈ</p>
       <p style="font-size: 0.8rem; margin-top: 0.5rem;">By Gyan Browser 👮‍♂️</p>
