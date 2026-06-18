@@ -17,7 +17,7 @@ const db = firebase.firestore();
 // ============================================
 // 💳 RAZORPAY KEY (ਤੁਹਾਡੀ KEY ਪਾਓ)
 // ============================================
-const RAZORPAY_KEY_ID = "rzp_test_T2yaUdYBqa2QNK";
+const RAZORPAY_KEY_ID = "rzp_test_T32Uh8zjYrnyVA";
 
 // ============================================
 // 🔊 SOUND EFFECTS (Web Audio API - ਬਿਨਾਂ ਫਾਈਲ ਦੇ)
