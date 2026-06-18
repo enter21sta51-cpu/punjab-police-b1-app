@@ -605,9 +605,9 @@ function showPaymentOptions() {
   );
   
   if (choice) {
-    initiatePayment(20, 'per_test');
+    initiatePayment(10, 'per_test');
   } else {
-    initiatePayment(149, 'monthly');
+    initiatePayment(99, 'monthly');
   }
 }
 
