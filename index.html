@@ -209,6 +209,51 @@
       .footer-links { gap: 0.8rem; }
       .footer-links a { font-size: 0.8rem; }
     }
+        /* Auth Page Footer */
+    .auth-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 0.8rem 1rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-light);
+      z-index: 5;
+      border-top: 1px solid #e2e8f0;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+    }
+    .auth-footer .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .auth-footer .footer-links a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: 0.2s;
+    }
+    .auth-footer .footer-links a:hover {
+      text-decoration: underline;
+      color: var(--primary-light);
+    }
+    
+    /* Auth section ਨੂੰ ਹੇਠਾਂ ਥੋੜ੍ਹੀ ਥਾਂ ਦਿਓ ਤਾਂ ਜੋ footer content ਨੂੰ ਢੱਕੇ ਨਾ */
+    #auth-section {
+      padding-bottom: 5rem;
+    }
+    
+    /* Dark mode ਲਈ */
+    body.dark-mode .auth-footer {
+      background: rgba(30, 41, 59, 0.95);
+      border-top-color: #334155;
+    }
   </style>
 </head>
 <body>
@@ -367,20 +412,18 @@
           <h2>📊 ਮੇਰੀ ਹਿਸਟਰੀ</h2>
           <div id="history-list"><div class="loader"><div class="spinner"></div>ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...</div></div>
         </div>
+            <!-- Auth Page Footer -->
+    <footer class="auth-footer">
+      <div class="footer-links">
+        <a href="terms.html" target="_blank">📜 ਸ਼ਰਤਾਂ</a>
+        <a href="privacy.html" target="_blank">🔒 ਪ੍ਰਾਈਵੇਸੀ</a>
+        <a href="refund.html" target="_blank">💰 ਰੀਫੰਡ</a>
+        <a href="contact.html" target="_blank">📧 ਸੰਪਰਕ</a>
+      </div>
+      <p>© 2026 Punjab Police B1 Test Prep | By Gyan Browser 👮‍♂️</p>
+    </footer>
       </section>
     </main>
-
-    <!-- FOOTER with all 4 links -->
-    <footer>
-      <div class="footer-links">
-        <a href="terms.html" target="_blank">📜 Terms</a>
-        <a href="privacy.html" target="_blank">🔒 Privacy</a>
-        <a href="refund.html" target="_blank">💰 Refund</a>
-        <a href="contact.html" target="_blank">📧 Contact Us</a>
-      </div>
-      <p>© 2026 Punjab Police B1 Test Prep | ਸਿਰਫ਼ ਸਿੱਖਿਆ ਲਈ</p>
-      <p style="font-size: 0.8rem; margin-top: 0.5rem;">By Saleem Khan 👮‍♂️</p>
-    </footer>
   </div>
 
   <!-- Sound Toggle Button -->
