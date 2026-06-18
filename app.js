@@ -600,8 +600,8 @@ function backToTestHome() {
 function showPaymentOptions() {
   const choice = confirm(
     'ਤੁਹਾਡਾ ਫ੍ਰੀ ਟ੍ਰਾਇਲ ਖਤਮ ਹੋ ਗਿਆ ਹੈ!\n\n' +
-    '✅ "ਹਾਂ" = ₹20 ਦਾ 1 ਟੈਸਟ ਖਰੀਦੋ\n' +
-    '❌ "ਨਹੀਂ" = ₹149 ਦਾ ਮਾਸਿਕ ਸਬਸਕ੍ਰਿਪਸ਼ਨ (ਅਨਲਿਮਿਟਡ)'
+    'OK ਤੇ ਕਲਿੱਕ ਕਰਕੇ ਇਕ ਟੈਸਟ ਦੇਣ ਲਈ ₹10/test ਪੇਅ ਕਰੋ\n' +
+    'CANCEL ਤੇ ਕਲਿੱਕ ਕਰਕੇ ਇੱਕ ਮਹੀਨਾ ਅਨਲਿਮਿਟਡ ਟੈਸਟ ਦੇਣ ਲਈ ₹149/month ਪੇਅ ਕਰੋ)'
   );
   
   if (choice) {
